@@ -11,6 +11,7 @@ export const PRIVATE_COLLECTIONS = [
   "mixmax_sync_jobs",
   "mixmax_sync_leases",
   "mixmax_import_backups",
+  "mixmax_automation_budgets",
 ];
 
 export function extractLiteralList(source, marker) {
@@ -45,7 +46,7 @@ export function verifyMixmaxRules({ rulesSource, firebaseSource }) {
     "mixmax_cases",
     "mixmax_sequences",
   ]);
-  assert.deepEqual(ownerReadable, ["mixmax_connections", "mixmax_sends"]);
+  assert.deepEqual(ownerReadable, ["mixmax_connections", "mixmax_sends", "mixmax_automation_runs"]);
 
   for (const collection of PRIVATE_COLLECTIONS) {
     assert.equal(readable.has(collection), false, `${collection} must stay server-only`);

@@ -24,7 +24,7 @@
     {
       "path": "README.md",
       "sourceSha256": "bb2ba2a5f843b2980f99959304f920f971ce3923ecc4bf78d359efbc6289c34e",
-      "targetSha256": "33ceedc7695a32a6b802f8fd1985302885dd101dc5246da2888dc0c7f1d5bc44",
+      "targetSha256": "a06c7b8a73e75cc3bbbab17708ad864cfc77a9a6f452d1f2b0ab8dac667965d6",
       "modified": true
     },
     {
@@ -3102,7 +3102,7 @@
     {
       "path": "package.json",
       "sourceSha256": "702e05c025cc2e639fee1aa92b1f35f360a8f82d5358414a397690af58e7a570",
-      "targetSha256": "b61939b3f34c0c1e6a7194c95f9c462a72cd453ce618c391b9881e3f07c12ebd",
+      "targetSha256": "638ef2c749c30f3ee6976487be0c478d14fc34be99f1d020fa325c0acd01ec1b",
       "modified": true
     },
     {
@@ -3558,7 +3558,7 @@
     {
       "path": "src/app/layout.tsx",
       "sourceSha256": "ad34ede46f3da02cc07a234b3c38c598e4edea001325f9d85f14f05b93061282",
-      "targetSha256": "7ad11121c7d53ae7b49ac68f4d900352f4a5fe7c5d202d476530c71a57b582f5",
+      "targetSha256": "d2efcca87807c6f3c078bfca282061f17fa2f256eedb85827293a066406647ae",
       "modified": true
     },
     {
@@ -5138,31 +5138,39 @@
     },
     {
       "path": "firestore.mixmax.indexes.json",
-      "sha256": "a0287e75d5ae7a796f5b0d608e9dab891fc68c339c01d9cd4d63c5ac09e49707"
+      "sha256": "86bf655e89ec8c3764b76614fb86deddc635706a609e2bdf3380db6bce50ae1e"
     },
     {
       "path": "firestore.mixmax.rules",
-      "sha256": "820d0f28ec0fd96e77d8a3d867dcff620d5ddfeef0f60a5819f2a8abcf3859ce"
+      "sha256": "12a2ebcd50fec8390481a8547b8d1dae94c1b3991ef87e6b7e87a050b0e4d8fc"
+    },
+    {
+      "path": "functions/mixmax/automation-core.ts",
+      "sha256": "c150b07db86bb27c4e9e815687f3aeebb952024134991927802c593796708df2"
+    },
+    {
+      "path": "functions/mixmax/automation.ts",
+      "sha256": "e56c53e4dd4ba9d8e7f0cb34d33b9f85f5557c26a67785ba18179f42138e794c"
     },
     {
       "path": "functions/mixmax/common.ts",
-      "sha256": "60e6054714719e9a5ea2cd1a175f0f1e493d4232d4c51f213f4e8ff1368bb727"
+      "sha256": "588268e65d9561fd541dc32ed7c2b787b5bc4b2385823a56b941ca6d8275b326"
     },
     {
       "path": "functions/mixmax/gmail-core.ts",
-      "sha256": "75506b0083f9dcfaaefd719da4d1de92d75bd914760597b9919ff81a762708d0"
+      "sha256": "789e607f9c5de6bfcac152978adfb30ac3be9ea094236374a0f67c76d021e2d5"
     },
     {
       "path": "functions/mixmax/gmail.ts",
-      "sha256": "2b70e3564c96f156b7c5cf67fccb43a04eb757ebaef258df3e630287a6c59b76"
+      "sha256": "3616cf36bc182f46b278d8a74972499a538ce0692ce496c8455eb9930befb224"
     },
     {
       "path": "functions/mixmax/index.ts",
-      "sha256": "9dd94126a0b17db66c60cfa9904784bf40abd75e6618dd9c7f3cffdcc973b974"
+      "sha256": "d6f92fd29e5e8a88eb5e7f17ab6857921bc163ec0f2185ce3e364df8d9c41a10"
     },
     {
       "path": "functions/mixmax/workspace.ts",
-      "sha256": "8d293181d54f535ee552048bd853f559f03e47e1a12653da9c81aeb58404a184"
+      "sha256": "5563293ba01a7ca6ec6abc30f55bcd54039d84f2d1cadc81fcc7a690d574031e"
     },
     {
       "path": "src/app/mail/page.tsx",
@@ -5170,11 +5178,11 @@
     },
     {
       "path": "src/components/mixmax/Workspace.tsx",
-      "sha256": "570f274e97ad4e048221fe0c4b15ed6614f43696b7eb84574f3ba1f137662fe9"
+      "sha256": "e74505035e75772391476c4a290036f1d8548414c2cfd0edd8fea89aa8d58ce1"
     },
     {
       "path": "src/components/mixmax/workspace.module.css",
-      "sha256": "0efd6ce27d7b5527070475aa0a2aaf600375fe1dd6c6504f0dd32516fdbfc0a1"
+      "sha256": "61db017220b87b221419bf3f35f38929cfd28f6c946236fe77adc6c643060309"
     },
     {
       "path": "src/lib/mixmax.ts",

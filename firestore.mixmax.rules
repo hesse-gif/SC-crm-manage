@@ -6,7 +6,7 @@ service cloud.firestore {
     match /mixmax_members/{uid} { allow read: if request.auth != null && request.auth.uid == uid; }
     match /{collection}/{id} {
       allow read: if collection in ['mixmax_threads', 'mixmax_messages', 'mixmax_contacts', 'mixmax_templates', 'mixmax_cases', 'mixmax_sequences'] && scope();
-      allow read: if collection in ['mixmax_connections', 'mixmax_sends'] && scope() && (resource.data.ownerUid == request.auth.uid || (collection == 'mixmax_sends' && resource.data.ownerUid == ''));
+      allow read: if collection in ['mixmax_connections', 'mixmax_sends', 'mixmax_automation_runs'] && scope() && (resource.data.ownerUid == request.auth.uid || (collection == 'mixmax_sends' && resource.data.ownerUid == ''));
       allow read: if collection == 'mixmax_drafts' && scope() && (resource.data.get('ownerUid', '') == '' || resource.data.ownerUid == request.auth.uid);
       allow write: if false;
     }

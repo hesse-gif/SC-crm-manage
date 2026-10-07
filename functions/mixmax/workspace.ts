@@ -3,6 +3,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { db, requireMember, verifiedIdentity, ownerEmail, inputString, inputId, ownedDocument, callableOptions, assertResolvedTemplate } from "./common";
 import { googleSecret, googleClientId, oauthReady, sendForConnection, GmailSendAttemptError } from "./gmail";
+import { automationPolicyDigest } from "./automation-core";
 
 const geminiKey = defineSecret("geminiApiKey");
 const model = defineString("MIXMAX_AI_MODEL", { default: "gemini-3.8-flash" });
@@ -14,7 +15,7 @@ export const mixmaxBootstrap = onCall(callableOptions, async request => {
   await db.runTransaction(async tx => {
     if ((await tx.get(ref)).exists) return;
     if (!ownerEmail.value() || identity.email !== ownerEmail.value().trim().toLowerCase()) {
-      throw new HttpsError("permission-denied", "Mixmax 관리자에게 접근 권한을 요청해 주세요.");
+      throw new HttpsError("permission-denied", "Handle 관리자에게 접근 권한을 요청해 주세요.");
     }
     tx.create(ref, { ...identity, workspaceId: "primary", role: "owner", createdAt: now() });
   });
@@ -141,15 +142,21 @@ export const mixmaxSendMail = onCall({ ...callableOptions, secrets: [googleSecre
   const ref = db.doc(`mixmax_sends/${member.uid}_${requestId}`);
   const existing = await db.runTransaction(async tx => {
     const previous = (await tx.get(ref)).data();
+    const currentThreadRef = threadId ? db.doc(`mixmax_threads/${threadId}`) : null;
+    const currentThread = currentThreadRef ? (await tx.get(currentThreadRef)).data() : undefined;
     if (previous) {
       if (previous.digest !== digest) throw new HttpsError("already-exists", "발송 요청 ID가 다른 내용에 사용되었습니다.");
       if (previous.status === "sent") return previous;
       if (previous.status === "failed_retryable") {
+        if (currentThread?.automationSendingRunId) throw new HttpsError("failed-precondition", "자동응대 발송 결과를 먼저 확인해 주세요.");
+        if (currentThreadRef) tx.update(currentThreadRef, { autoReplySuppressedMessageId: currentThread?.latestMessageId ?? "" });
         tx.update(ref, { status: "sending", updatedAt: now() });
         return null;
       }
       throw new HttpsError("failed-precondition", "이 요청은 처리 중이거나 결과 확인이 필요합니다. 발송함을 확인해 주세요.");
     }
+    if (currentThread?.automationSendingRunId) throw new HttpsError("failed-precondition", "자동응대 발송 결과를 먼저 확인해 주세요.");
+    if (currentThreadRef) tx.update(currentThreadRef, { autoReplySuppressedMessageId: currentThread?.latestMessageId ?? "" });
     tx.create(ref, { workspaceId: member.workspaceId, ownerUid: member.uid, connectionId, threadId, to, subject, body: text, digest, status: "sending", createdAt: now() });
     return null;
   });
@@ -175,7 +182,7 @@ function saveItem(collection: string, keys: string[]) {
     await db.runTransaction(async tx => {
       const previous = (await tx.get(ref)).data();
       if (previous && previous.workspaceId !== member.workspaceId) throw new HttpsError("permission-denied", "항목을 수정할 수 없습니다.");
-      tx.set(ref, { ...values, workspaceId: member.workspaceId, updatedAt: now(), createdAt: previous?.createdAt ?? now(), ...(collection === "mixmax_sequences" ? { status: "draft" } : {}) }, { merge: true });
+      tx.set(ref, { ...values, workspaceId: member.workspaceId, updatedAt: now(), createdAt: previous?.createdAt ?? now(), ...(collection === "mixmax_sequences" ? { status: "draft" } : {}), ...(collection === "mixmax_cases" ? { policyDigest: automationPolicyDigest({ ...previous, ...values }), status: "needs_review" } : {}) }, { merge: true });
     });
     return { id };
   });

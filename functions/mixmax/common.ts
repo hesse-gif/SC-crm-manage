@@ -15,7 +15,7 @@ export interface Member { uid: string; email: string; workspaceId: string; role:
 export function assertTargetProject() {
   const project = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || app.options.projectId;
   if (project !== PROJECT && !(project === "demo-mixmax" && process.env.FIRESTORE_EMULATOR_HOST)) {
-    throw new HttpsError("failed-precondition", "Mixmax project configuration is invalid.");
+    throw new HttpsError("failed-precondition", "Handle project configuration is invalid.");
   }
 }
 export function verifiedIdentity(request: CallableRequest): { uid: string; email: string } {
@@ -29,7 +29,7 @@ export async function requireMember(request: CallableRequest): Promise<Member> {
   const identity = verifiedIdentity(request);
   const member = (await db.doc(`mixmax_members/${identity.uid}`).get()).data();
   if (!member || member.disabled || member.email !== identity.email || typeof member.workspaceId !== "string") {
-    throw new HttpsError("permission-denied", "이 Mixmax 워크스페이스에 접근할 수 없습니다.");
+    throw new HttpsError("permission-denied", "이 Handle 워크스페이스에 접근할 수 없습니다.");
   }
   return { ...identity, workspaceId: member.workspaceId, role: member.role };
 }

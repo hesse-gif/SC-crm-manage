@@ -28,7 +28,7 @@ export async function queueSync(id: string) {
 }
 export const mixmaxBeginGoogleOAuth = onCall({ ...callableOptions, secrets: [googleSecret] }, async request => {
   const member = await requireMember(request);
-  if (oauthReady.value() !== "true") throw new HttpsError("failed-precondition", "Google Cloud에서 Mixmax 메일 OAuth 콜백 설정을 완료해야 합니다. Google 로그인은 사용할 수 있습니다.");
+  if (oauthReady.value() !== "true") throw new HttpsError("failed-precondition", "Google Cloud에서 Handle 메일 OAuth 콜백 설정을 완료해야 합니다. Google 로그인은 사용할 수 있습니다.");
   const state = randomOAuthState();
   await db.doc(`mixmax_oauth_states/${oauthStateDocId(state)}`).create({ ownerUid: member.uid, workspaceId: member.workspaceId, expiresAt: Date.now() + 600000 });
   return { url: buildGoogleOAuthUrl(config(), state) };
@@ -74,7 +74,7 @@ export const mixmaxGoogleCallback = onRequest({ region: REGION, secrets: [google
     // covers the initial push even if it arrives before this atomic mapping commit.
     const batch = db.batch();
     batch.set(credentialRef, { refreshToken, ownerUid: binding.ownerUid, workspaceId: binding.workspaceId, updatedAt: now() });
-    batch.set(db.doc(`mixmax_connections/${id}`), { ownerUid: binding.ownerUid, workspaceId: binding.workspaceId, email: profile.emailAddress, status: "connected", watchExpiration: watchExpirationIso(watch.expiration), updatedAt: now() }, { merge: true });
+    batch.set(db.doc(`mixmax_connections/${id}`), { ownerUid: binding.ownerUid, workspaceId: binding.workspaceId, email: profile.emailAddress, status: "connected", automationEnabled: false, automationEnabledAt: "", watchExpiration: watchExpirationIso(watch.expiration), updatedAt: now() }, { merge: true });
     phase = "persist_connection";
     await batch.commit();
     phase = "queue_sync";
@@ -101,11 +101,13 @@ export const mixmaxDisconnectGoogle = onCall({ ...callableOptions, secrets: [goo
   const id = inputId(request.data.connectionId);
   const { ref, data } = await ownedDocument("mixmax_connections", id, member);
   if (data.ownerUid !== member.uid) throw new HttpsError("permission-denied", "본인 계정만 해제할 수 있습니다.");
+  // Pause first so a concurrent automated sender sees the disconnect immediately.
+  await ref.update({ automationEnabled: false, automationUpdatedAt: now() });
   // Stop target-only watch before deleting target-owned credentials. No Google grant revocation.
   try { await gmailFetch(deps, await tokenFor(id), "/users/me/stop", { method: "POST" }); }
   catch (error) { if (!(error instanceof GmailApiError) || ![400, 401, 403].includes(error.status)) throw new HttpsError("unavailable", "Google 연결 해제에 실패했습니다. 다시 시도해 주세요."); }
   await db.doc(`mixmax_credentials/${id}`).delete();
-  await ref.update({ status: "disconnected", updatedAt: now() });
+  await ref.update({ status: "disconnected", automationEnabled: false, updatedAt: now() });
   return { ok: true };
 });
 
@@ -142,7 +144,7 @@ async function persistThread(accessToken: string, connection: { id: string; work
     for (const projection of projections.slice(offset, offset + 200)) batch.set(db.doc(`mixmax_messages/${projection.message.id}`), { ...projection.message, text: projection.message.text.slice(0, 180000), html: "" }, { merge: true });
     await batch.commit();
   }
-  await db.doc(`mixmax_threads/${latest.thread.id}`).set({ ...latest.thread, mailbox: connection.email, unread: projections.some(p => p.thread.unread), sourceDeleted: false, updatedAt: now() }, { merge: true });
+  await db.doc(`mixmax_threads/${latest.thread.id}`).set({ ...latest.thread, mailbox: connection.email, latestMessageId: latest.message.id, latestMessageDirection: latest.message.direction, unread: projections.some(p => p.thread.unread), sourceDeleted: false, updatedAt: now() }, { merge: true });
 }
 
 export async function syncMailbox(id: string) {
@@ -241,19 +243,23 @@ export const mixmaxRenewGmailWatches = onSchedule({ schedule: "every 24 hours", 
 export class GmailSendAttemptError extends Error {
   constructor(readonly uncertain: boolean) { super(uncertain ? "Gmail send outcome is unknown" : "Gmail send was not accepted"); }
 }
-export async function sendForConnection(id: string, input: Parameters<typeof encodeSimpleRawEmail>[0], gmailThreadId?: string) {
+export async function sendForConnection(id: string, input: Parameters<typeof encodeSimpleRawEmail>[0], gmailThreadId?: string, options: { expectedGmailMessageId?: string; beforeSend?: () => Promise<void> } = {}) {
   assertTargetProject();
   let token: string;
   let raw: string;
   try {
     token = await tokenFor(id);
+    if (options.expectedGmailMessageId && !gmailThreadId) throw new Error("Automatic replies require a Gmail thread");
     if (gmailThreadId) {
       const thread = await gmailFetch<{ messages?: GmailMessage[] }>(deps, token, `/users/me/threads/${encodeURIComponent(gmailThreadId)}`, { query: { format: "metadata" } });
       const last = thread.messages?.at(-1);
+      if (options.expectedGmailMessageId && last?.id !== options.expectedGmailMessageId) throw new Error("Conversation changed before automatic reply");
       const ref = headerValue(last?.payload?.headers, "message-id");
+      if (options.expectedGmailMessageId && (!ref || /[\r\n]/.test(ref))) throw new Error("Automatic replies require a valid Message-ID");
       if (ref && !/[\r\n]/.test(ref)) { input.inReplyTo = ref; input.references = ref; }
     }
     raw = encodeSimpleRawEmail(input);
+    await options.beforeSend?.();
   } catch { throw new GmailSendAttemptError(false); }
   let sent;
   try { sent = await sendGmailRawMessage(deps, token, raw, gmailThreadId); }

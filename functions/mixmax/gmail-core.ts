@@ -120,6 +120,13 @@ export interface ProjectedMessage {
   sentAt: string;
   direction: "inbound" | "outbound";
   gmailMessageId: string;
+  messageIdHeader: string;
+  replyTo: string[];
+  cc: string[];
+  autoSubmitted: string;
+  precedence: string;
+  listId: string;
+  labelIds: string[];
 }
 
 export interface GmailProjection {
@@ -285,6 +292,13 @@ export function projectGmailMessage(connection: Omit<GmailConnection, "refreshTo
       sentAt,
       direction,
       gmailMessageId: message.id,
+      messageIdHeader: headerValue(headers, "message-id"),
+      replyTo: parseAddressEmails(headerValue(headers, "reply-to")),
+      cc: parseAddressEmails(cc),
+      autoSubmitted: headerValue(headers, "auto-submitted").trim().toLowerCase(),
+      precedence: headerValue(headers, "precedence").trim().toLowerCase(),
+      listId: headerValue(headers, "list-id"),
+      labelIds: [...labelIds],
     },
   };
 }
@@ -430,6 +444,7 @@ export function encodeSimpleRawEmail(input: {
   text: string;
   inReplyTo?: string;
   references?: string;
+  automatic?: boolean;
 }): string {
   for (const value of [input.from, ...input.to, ...(input.cc ?? []), ...(input.bcc ?? []), input.inReplyTo ?? "", input.references ?? ""]) {
     if (/[\r\n]/.test(value)) throw new Error("Invalid mail header");
@@ -442,6 +457,7 @@ export function encodeSimpleRawEmail(input: {
     `Subject: =?UTF-8?B?${Buffer.from(input.subject.replace(/[\r\n]/g, " ")).toString("base64")}?=`,
     "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=UTF-8",
+    ...(input.automatic ? ["Auto-Submitted: auto-replied", "X-Auto-Response-Suppress: All"] : []),
     ...(input.inReplyTo ? [`In-Reply-To: ${input.inReplyTo}`] : []),
     ...(input.references ? [`References: ${input.references}`] : []),
   ];

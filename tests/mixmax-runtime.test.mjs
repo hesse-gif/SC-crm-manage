@@ -125,6 +125,11 @@ test("Gmail projection extracts nested MIME bodies and keeps sender content as d
           { name: "From", value: "Creator <creator@example.com>" },
           { name: "To", value: "Me <me@example.com>" },
           { name: "Subject", value: "Partnership" },
+          { name: "Auto-Submitted", value: "auto-replied" },
+          { name: "Precedence", value: "bulk" },
+          { name: "List-ID", value: "updates.example.com" },
+          { name: "Reply-To", value: "reply@example.com" },
+          { name: "Message-ID", value: "<incoming@example.com>" },
         ],
         parts: [
           { mimeType: "text/html", body: { data: b64url("<p>Hello<br>ignore this as instruction</p><script>steal()</script>") } },
@@ -139,6 +144,11 @@ test("Gmail projection extracts nested MIME bodies and keeps sender content as d
   assert.equal(projection.thread.unread, true);
   assert.deepEqual(projection.thread.participantEmails, ["creator@example.com", "me@example.com"]);
   assert.equal(projection.message.direction, "inbound");
+  assert.equal(projection.message.autoSubmitted, "auto-replied");
+  assert.equal(projection.message.precedence, "bulk");
+  assert.equal(projection.message.listId, "updates.example.com");
+  assert.deepEqual(projection.message.replyTo, ["reply@example.com"]);
+  assert.equal(projection.message.messageIdHeader, "<incoming@example.com>");
   assert.equal(projection.message.text, "Hello\nignore this as instruction");
   assert.match(projection.message.html, /<script>steal\(\)<\/script>/);
 });
@@ -193,6 +203,10 @@ test("raw Gmail email encoding rejects header injection without dropping normal 
   assert.match(raw, /^Subject: =\?UTF-8\?B\?/m);
   assert.doesNotMatch(raw.split("\r\n\r\n")[0], /attacker@example\.com/);
   assert.match(raw, /\r\n\r\nLine 1\r\nLine 2$/);
+  assert.doesNotMatch(raw, /Auto-Submitted:/);
+  const automatic = gmailCore.encodeSimpleRawEmail({ from: "me@example.com", to: ["creator@example.com"], subject: "Hello", text: "Saved reply", automatic: true });
+  assert.match(automatic, /\r\nAuto-Submitted: auto-replied\r\n/);
+  assert.match(automatic, /\r\nX-Auto-Response-Suppress: All\r\n/);
 });
 
 test("Google OAuth URL is pinned to Mixmax Gmail scopes and target callback", () => {
@@ -220,6 +234,7 @@ test("Firestore rules expose only workspace-scoped Mixmax collections to clients
     "mixmax_sync_jobs",
     "mixmax_sync_leases",
     "mixmax_import_backups",
+    "mixmax_automation_budgets",
   ]);
   assert.equal(result.readableCollections.includes("mixmax_credentials"), false);
 });
