@@ -1,0 +1,1055 @@
+{
+  "schemaVersion": "scp.integration-event.v2.handoff",
+  "contract": {
+    "owner": "portal",
+    "schemaPath": "contracts/scp-integration-event-v2/schema.json",
+    "schemaSha256": "21033cf3b8746926f2c1c1168a06049f647e0becb6a8440e5a6db97f0c6c3510",
+    "fixtureDirectory": "contracts/scp-integration-event-v2/fixtures",
+    "fixtureAggregateAlgorithm": "sha256(sorted fixture filename + NUL + exact fixture file bytes + LF)",
+    "fixtureAggregateSha256": "4769e937c4365c9585a3d0d4342e7e98737eea4fe3ec310d2fd632637ef87020",
+    "eventNames": [
+      "application.submitted",
+      "uid.guide-email.requested",
+      "uid.submitted",
+      "video.submitted",
+      "video.review-status.changed",
+      "video.view-snapshot.updated",
+      "creator.channel-verified"
+    ]
+  },
+  "generation": {
+    "canonicalJson": {
+      "objectKeyOrdering": "ascending UTF-16 code unit ordinal order",
+      "arrays": "preserve input order",
+      "undefinedObjectMembers": "omitted",
+      "insignificantWhitespace": "none"
+    },
+    "eventId": {
+      "deterministic": true,
+      "algorithm": "evt_ + first 32 lowercase hex chars of SHA-256(canonical JSON of event identity material excluding schemaVersion, eventId, and occurredAt)",
+      "identityMaterialIncludedFields": [
+        "eventName",
+        "source",
+        "traceId",
+        "revision",
+        "subject",
+        "payload"
+      ],
+      "identityMaterialExcludedFields": [
+        "schemaVersion",
+        "eventId",
+        "occurredAt"
+      ],
+      "retryInvariant": "Persist immutable eventId, event, exact canonical body, identitySha256, and bodySha256 in the durable outbox; never rebuild occurredAt or identity material. Every delivery attempt derives fresh transport headers separately.",
+      "receiverValidation": "Require eventId to equal deterministicIntegrationEventV2Id(integrationEventV2IdentityMaterial(event)) after authenticated canonical-body parsing and before any receipt mutation or downstream effect."
+    },
+    "identitySha256": {
+      "algorithm": "SHA-256(canonical JSON of integrationEventV2IdentityMaterial(event))",
+      "excludedFields": [
+        "schemaVersion",
+        "eventId",
+        "occurredAt"
+      ],
+      "purpose": "logical idempotency identity shared with deterministic eventId generation"
+    },
+    "keys": {
+      "encoding": "canonical_json_array",
+      "delimiterJoinAllowed": false,
+      "pipeline": {
+        "tuple": [
+          "subject.programId",
+          "subject.applicationId"
+        ],
+        "scope": "cross-event application pipeline trace continuity"
+      },
+      "revisionSubject": {
+        "scope": "event-scoped monotonic revision",
+        "tuplesByEventName": {
+          "application.submitted": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.uidGrantId"
+          ],
+          "uid.guide-email.requested": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.uidGrantId"
+          ],
+          "uid.submitted": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.uidGrantId",
+            "subject.uidSubmissionId"
+          ],
+          "video.submitted": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.videoSubmissionId",
+            "subject.youtubeVideoId"
+          ],
+          "video.review-status.changed": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.videoSubmissionId",
+            "subject.youtubeVideoId",
+            "subject.reviewId"
+          ],
+          "video.view-snapshot.updated": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.videoSubmissionId",
+            "subject.youtubeVideoId",
+            "subject.trackingId"
+          ],
+          "creator.channel-verified": [
+            "eventName",
+            "subject.programId",
+            "subject.applicationId",
+            "subject.portalCreatorId"
+          ]
+        }
+      }
+    },
+    "traceId": {
+      "portalProducer": "tr_ + applicationId",
+      "scope": "one application pipeline trace spanning application, UID, video, review, and view snapshot events",
+      "pipelineKey": "canonical JSON array of [subject.programId, subject.applicationId]",
+      "notScopedBy": [
+        "eventName",
+        "revision",
+        "videoSubmissionId",
+        "reviewId",
+        "trackingId"
+      ]
+    },
+    "deliveryAttempts": {
+      "durableOutboxUnit": [
+        "eventId",
+        "event",
+        "body",
+        "identitySha256",
+        "bodySha256"
+      ],
+      "attemptFieldsNotPersisted": [
+        "x-scp-timestamp",
+        "x-scp-signature",
+        "x-scp-key-id"
+      ],
+      "attemptRule": "For every delivery attempt, generate a fresh x-scp-timestamp and HMAC signature over the unchanged canonical body using the currently configured current slot keyId and secret.",
+      "afterFreshnessWindow": "Retry the same immutable eventId and body with a new timestamp and signature; never replay a stale signed request.",
+      "afterKeyRotation": "Retry the same immutable eventId and body using the newly configured current versioned keyId and secret."
+    }
+  },
+  "wire": {
+    "method": "POST",
+    "contentType": "application/json",
+    "canonicalBody": "UTF-8 bytes of deterministic JSON with object keys sorted by ascending UTF-16 code unit ordinal order and no insignificant whitespace",
+    "dateTimeProfile": {
+      "schemaDefinition": "#/$defs/rfc3339DateTime",
+      "runtimeValidator": "isIntegrationEventV2Rfc3339DateTime",
+      "requirements": [
+        "actual JSON string",
+        "uppercase T separator",
+        "mandatory uppercase Z or numeric timezone offset",
+        "valid proleptic-Gregorian calendar date",
+        "hour/minute/second and offset components in range",
+        "no leap second"
+      ]
+    },
+    "signing": {
+      "algorithm": "HMAC-SHA-256",
+      "keyBytes": "UTF-8 bytes of the secret selected by x-scp-key-id",
+      "messageBytesInOrder": [
+        "ASCII decimal x-scp-timestamp Unix seconds",
+        "literal period byte 0x2e",
+        "exact canonical request body UTF-8 bytes"
+      ],
+      "output": "sha256= followed by 64 lowercase hex HMAC bytes"
+    },
+    "headers": {
+      "content-type": "application/json",
+      "x-scp-content-sha256": "lowercase hex SHA-256 of exact canonical event body bytes",
+      "x-scp-event-id": "event.eventId",
+      "x-scp-key-id": "configured stable versioned key identifier; not a slot name",
+      "x-scp-signature": "sha256=<lowercase hex HMAC-SHA-256 output>",
+      "x-scp-timestamp": "Unix timestamp seconds"
+    },
+    "nonProductionTestVector": {
+      "productionUseForbidden": true,
+      "fixture": "contracts/scp-integration-event-v2/fixtures/application.submitted.json",
+      "keyId": "test-current-v1",
+      "utf8KeySecret": "portal-current-secret-32-bytes-minimum",
+      "timestamp": 1784332800,
+      "identitySha256": "801022151d44c4e245cd02ece46d0a739ba246ba2335d857222903ad8dbf6045",
+      "bodySha256": "7007276faa11bdabb37cdfb7d139e2d6103966c01aeaa20040172bb3cd65062e",
+      "signature": "sha256=33579f55063eebf5c23bf845f0a916d07ad812f4cb1cd83779e299b437230921"
+    },
+    "safeIntegerProfile": {
+      "maximum": 9007199254740991,
+      "runtimeValidator": "Number.isSafeInteger",
+      "fields": [
+        "revision",
+        "payload.reportedViews for video.submitted",
+        "payload.viewCount for video.view-snapshot.updated"
+      ]
+    }
+  },
+  "verification": {
+    "keyRotation": {
+      "slots": [
+        {
+          "slot": "current",
+          "keyId": "configured stable versioned identifier",
+          "exampleKeyId": "test-current-v1",
+          "signsDeliveryAttempts": true
+        },
+        {
+          "slot": "previous",
+          "keyId": "configured stable versioned identifier",
+          "exampleKeyId": "test-previous-v0",
+          "signsDeliveryAttempts": false
+        }
+      ],
+      "lookup": "match incoming x-scp-key-id to configured slot keyId",
+      "unknownKeyId": "signature_invalid HTTP 401",
+      "overlapRule": "Verify inbound requests against both configured current and previous keyIds during overlap; every outbound delivery attempt signs with current.",
+      "retirementRule": "Retire previous after the accepted inbound freshness/replay overlap window; durable outbox retries do not depend on old signing headers or old key material.",
+      "storedRequestRule": "Persist and never rewrite immutable eventId, event, canonical body, identitySha256, or bodySha256. Do not persist timestamp, signature, or key headers as the retry unit. Every retry creates fresh x-scp-timestamp and x-scp-signature with the configured current versioned x-scp-key-id."
+    },
+    "freshness": {
+      "timestampHeader": "x-scp-timestamp",
+      "maxSkewSeconds": 300,
+      "staleStatus": 401
+    },
+    "replay": {
+      "ordering": [
+        "authenticate content hash, timestamp, key id, and HMAC",
+        "parse and validate the exact canonical event body shape",
+        "require x-scp-event-id to equal body eventId; reject signature_invalid before any receipt lookup",
+        "evaluate deterministic eventId; on mismatch, use read-only existing-receipt identity lookup to classify unseen invalid_event HTTP 400 versus existing changed-identity idempotency_conflict HTTP 409",
+        "guard the authenticated signature replay before any effect",
+        "check global eventId plus logical identitySha256 equality",
+        "check cross-event pipeline trace continuity",
+        "check event-scoped revision monotonicity",
+        "persist the accepted receipt before any downstream effect"
+      ],
+      "sameSignatureWithMatchingAcceptedReceipt": "exact accepted signed retry is duplicate success HTTP 200 without rerunning effects",
+      "sameSignatureWithoutMatchingAcceptedReceiptStatus": 409,
+      "sameSignatureWithoutMatchingAcceptedReceiptError": "replay_rejected",
+      "sameEventIdSameIdentityDifferentOccurredAtWithNewSignature": "duplicate success HTTP 200 without rerunning effects",
+      "sameEventIdDifferentLogicalIdentity": "after authentication, a read-only existing receipt identity lookup classifies this as idempotency_conflict HTTP 409 before replay guard, receipt mutation, or effects",
+      "reusedOrUnmatchedSignature": "replay_rejected HTTP 409"
+    },
+    "idempotency": {
+      "eventIdScope": "global contract event id",
+      "duplicateStatus": 200,
+      "conflictStatus": 409,
+      "receiptFields": [
+        "identitySha256",
+        "bodySha256"
+      ],
+      "duplicateEqualityField": "identitySha256",
+      "identitySha256Definition": "SHA-256 of canonical JSON of event identity material excluding schemaVersion, eventId, and occurredAt",
+      "bodySha256Definition": "SHA-256 of the exact full canonical event body bytes retained only as accepted transport evidence; it is not the duplicate equality field",
+      "deterministicReceiveGate": "Before replay guard, receipt mutation, or effects, reject any eventId unequal to evt_ + first 32 lowercase hex chars of SHA-256(canonical identity material); a read-only existing receipt lookup preserves 409 conflict classification, while an unknown arbitrary eventId is invalid_event HTTP 400."
+    },
+    "revision": {
+      "scope": "per eventName plus its event-specific subject identifier tuple",
+      "keyEncoding": "canonical_json_array",
+      "subjectRevisionRule": "revision must increase monotonically per event-scoped revision subject key",
+      "notMonotonicStatus": 409
+    },
+    "trace": {
+      "scope": "cross-event application pipeline",
+      "pipelineKey": "canonical JSON array of [subject.programId, subject.applicationId]",
+      "keyEncoding": "canonical_json_array",
+      "traceContinuityRule": "all accepted application, UID, video, review, and snapshot events for the same pipeline key keep the original traceId",
+      "mismatchStatus": 409
+    },
+    "statusSemantics": {
+      "accepted": 201,
+      "duplicate": 200,
+      "invalidOrPrivacyRejected": 400,
+      "signatureInvalidOrStale": 401,
+      "conflictReplayRevisionOrTrace": 409,
+      "http409IsSuccess": false
+    },
+    "videoSubmittedCanonicalUrl": {
+      "schemaField": "#/$defs/videoSubmitted/properties/payload/properties/canonicalVideoUrl",
+      "requiredForm": "https://www.youtube.com/watch?v=<youtubeVideoId>",
+      "receiverEqualityFields": [
+        "URL query v",
+        "payload.youtubeVideoId",
+        "subject.youtubeVideoId"
+      ],
+      "receiverRule": "Require exact string equality with https://www.youtube.com/watch?v=${payload.youtubeVideoId} and require payload.youtubeVideoId to equal subject.youtubeVideoId.",
+      "reject": [
+        "query extras",
+        "alternate hosts",
+        "alternate paths",
+        "percent-encoding tricks",
+        "identifier mismatches"
+      ]
+    },
+    "videoSubmittedGameId": {
+      "schemaField": "#/$defs/videoSubmitted/properties/payload/properties/gameId",
+      "presence": "optional",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "meaning": "Program title registry id (xp-hero, snake-clash, ...). Portal sends the id the submitter chose; Flu reads an absent value as the program default title (xp-hero) and an unknown id as the default title flagged for human review (gameIdUnresolved).",
+      "addedOn": "2026-09-05",
+      "schemaVersionUnchanged": true
+    }
+  },
+  "privacy": {
+    "mode": "fail_closed_explicit_categories",
+    "forbiddenCategories": [
+      {
+        "category": "raw_email",
+        "patternSemantics": "email-looking local-part@domain.tld substring in a free-text value"
+      },
+      {
+        "category": "bearer_token",
+        "patternSemantics": "case-insensitive Bearer plus whitespace plus token-looking credential substring"
+      },
+      {
+        "category": "raw_uid_like_free_text",
+        "patternSemantics": "bare contiguous 8-20 digit run in a free-text value; UID-labelled numeric content is also rejected by runtime validation"
+      }
+    ],
+    "coveredFreeTextFields": [
+      "payload.title"
+    ],
+    "absentFreeTextFields": [
+      "payload.description",
+      "payload.publicReason"
+    ],
+    "futureFreeTextFieldRule": {
+      "fields": [
+        "description",
+        "publicReason"
+      ],
+      "requiredSchemaReference": "#/$defs/freeTextPrivacy",
+      "adoptionRule": "Schema additionalProperties remains false; a future free-text field cannot be adopted until schema and runtime privacy validation both cover it."
+    },
+    "schemaDefinition": "#/$defs/freeTextPrivacy",
+    "structuredStringClassification": {
+      "opaqueIdentifiers": [
+        "eventId",
+        "traceId",
+        "subject.*Id",
+        "payload.reasonCode"
+      ],
+      "url": [
+        "payload.canonicalVideoUrl"
+      ],
+      "timestamps": [
+        "occurredAt",
+        "payload.publishedAt",
+        "payload.collectedAt"
+      ],
+      "enumsAndConstants": [
+        "eventName",
+        "source",
+        "payload application/review/status/locale/policy/content fields"
+      ],
+      "maskedValues": [
+        "payload.maskedUid"
+      ],
+      "hashes": [
+        "payload.uidLookupHmac"
+      ],
+      "registryIdentifiers": [
+        "payload.gameId"
+      ]
+    },
+    "receiverObligation": "After authentication, enforce schema and runtime privacy validation before any receipt or effect; reject an explicit forbidden category fail-closed.",
+    "runtimeSchemaParity": {
+      "runtimeValidator": "assertNoSensitiveIntegrationFields",
+      "schemaRule": "Every present v2 free-text wire field references #/$defs/freeTextPrivacy; structured strings retain their dedicated allowlist patterns.",
+      "limitation": "These explicit patterns do not detect every possible secret and must not be described as a general secret scanner."
+    }
+  },
+  "outreachTokenV2": {
+    "artifactOwner": "Portal",
+    "issuer": "Flu",
+    "receiver": "Portal",
+    "profile": "scp.outreach-token.v2",
+    "queryParameter": "outreach",
+    "purpose": "creator_application",
+    "tokenEncoding": {
+      "compactForm": "<payloadBase64url>.<signatureBase64url>",
+      "payloadJsonBytes": "UTF-8 bytes of a JSON object containing exactly the canonicalFields set; no additional fields are allowed",
+      "payloadBase64url": "RFC 4648 base64url without padding of the exact payloadJsonBytes",
+      "signingBytes": "ASCII/UTF-8 bytes of payloadBase64url exactly as present before the period",
+      "signatureAlgorithm": "HMAC-SHA-256",
+      "signatureKey": "shared versioned outreach secret selected by payload.keyId",
+      "signatureBase64url": "RFC 4648 base64url without padding of the 32-byte HMAC output",
+      "signatureComparison": "constant-time equality"
+    },
+    "canonicalFields": {
+      "additionalProperties": false,
+      "required": [
+        "purpose",
+        "keyId",
+        "expiresAt",
+        "programId",
+        "campaignId",
+        "outreachId",
+        "traceId",
+        "expectedEmailHmac"
+      ],
+      "properties": {
+        "purpose": { "type": "string", "const": "creator_application" },
+        "keyId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,64}$" },
+        "expiresAt": { "type": "integer", "unit": "Unix epoch milliseconds", "maximumSafeInteger": 9007199254740991 },
+        "programId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" },
+        "campaignId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" },
+        "outreachId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" },
+        "traceId": { "type": "string", "pattern": "^tr_[A-Za-z0-9._:-]{8,120}$" },
+        "expectedEmailHmac": { "type": "string", "pattern": "^v2_[A-Za-z0-9_-]{43}$" }
+      }
+    },
+    "expiry": {
+      "unit": "milliseconds",
+      "acceptWhen": "nowMs < expiresAt <= nowMs + maxFutureWindowMs",
+      "maxFutureWindowMs": 7776000000,
+      "expiredOrTooFarFuture": "invalid token; bind no canonical identifiers or trace"
+    },
+    "keyRotation": {
+      "keyIdMeaning": "stable versioned outreach key identifier, not an implicit slot name",
+      "portalEnvironmentFields": {
+        "currentKeyId": "SCP_OUTREACH_HMAC_KEY_ID (required with SCP_OUTREACH_HMAC_SECRET in production; only non-production literal current may omit it)",
+        "currentSecret": "SCP_OUTREACH_HMAC_SECRET",
+        "previousKeyId": "SCP_OUTREACH_HMAC_PREVIOUS_KEY_ID",
+        "previousSecret": "SCP_OUTREACH_HMAC_PREVIOUS_SECRET"
+      },
+      "issuer": "sign with the configured current keyId and its shared outreach secret",
+      "verifier": "resolve only exact configured current or previous keyIds during overlap",
+      "collisionRule": "fail closed when configured current and previous keyIds are identical; do not try either secret",
+      "unknownKeyId": "fail closed in every environment",
+      "localFallback": "allowed only for the explicit keyId current in non-production; previous and arbitrary keyIds never receive fallback material",
+      "retirement": "remove previous only after every token it signed has expired"
+    },
+    "expectedEmailBinding": {
+      "profile": "scp.outreach.expected-email.v2",
+      "normalizationOrder": [
+        "trim leading and trailing Unicode whitespace",
+        "Unicode NFKC normalization",
+        "lowercase",
+        "require 3-254 characters and a single email-shaped local@domain value without whitespace"
+      ],
+      "messageBytes": "UTF-8('scp.outreach.expected-email.v2') || 0x00 || UTF-8(normalizedEmail)",
+      "algorithm": "HMAC-SHA-256",
+      "key": "the same shared versioned outreach secret selected by keyId for the token signature",
+      "output": "literal v2_ plus RFC 4648 base64url without padding of the 32-byte HMAC output",
+      "comparison": "constant-time equality",
+      "domainSeparation": "the context plus NUL separator prevents reuse as a token signature or any Portal application-identity HMAC",
+      "portalApplicationHmacDependency": false,
+      "mismatchRule": "retain outreach=different evidence, but do not persist verifiedOutreach and do not bind campaignId, outreachId, or token traceId"
+    },
+    "validationOrder": [
+      "split into exactly two non-empty base64url segments and enforce the 2048-character payload bound plus 43-character signature",
+      "base64url-decode payload and parse one non-array JSON object",
+      "select canonical v2 when any of programId, campaignId, or traceId is present; require the exact canonical field set",
+      "validate purpose and safe keyId sufficiently to resolve a key",
+      "resolve exact current/previous keyId and verify token signature with constant-time equality; unknown keys fail closed",
+      "validate expiresAt safe-integer millisecond window, identifier/trace formats, and v2 expectedEmailHmac format",
+      "require token programId to equal the Apply programId",
+      "derive expectedEmailHmac from the normalized submitted email and the selected outreach secret and compare in constant time",
+      "only after every prior gate persist verifiedOutreach and allow branded v2 producers to bind campaignId, outreachId, and the unchanged token traceId"
+    ],
+    "legacyCompatibility": {
+      "profile": "legacy_v1_noncanonical",
+      "behavior": "legacy signed envelopes may retain match/different analytics and legacy UTM behavior",
+      "expectedEmailHmac": "legacy v1_ Portal application identity HMAC",
+      "canonicalBinding": false,
+      "separateSecretFallback": "legacy verification may retain its prior Portal application-HMAC fallback; canonical v2 never uses it"
+    },
+    "privacyAndFailure": {
+      "browserExchange": "GET /apply removes every decoded outreach query parameter before render and places one bounded token in a short-lived HttpOnly SameSite=Strict cookie scoped to /api/public/applications",
+      "rawTokenStorage": "forbidden in application, event, outbox, receipt, audit, analytics, Sheets, logs, rendered HTML, and RSC payloads",
+      "transientInputOnly": "the raw token may exist only in the redirect Set-Cookie exchange, the scoped request cookie, and in-memory public submission verification",
+      "invalidToken": "public Apply remains available; outreach=unknown and canonical identifiers/trace are omitted",
+      "validEmailMismatch": "public Apply remains available; outreach=different and canonical identifiers/trace are omitted",
+      "programMismatch": "public Apply remains available; outreach=unknown and canonical identifiers/trace are omitted"
+    },
+    "nonProductionTestVector": {
+      "productionUseForbidden": true,
+      "keyId": "test-outreach-current-v2",
+      "utf8SharedOutreachSecret": "outreach-test-secret-v2-32-bytes-minimum",
+      "expectedEmailInput": " Creator@Example.COM ",
+      "normalizedEmail": "creator@example.com",
+      "expectedEmailHmacMessageUtf8WithNulNotation": "scp.outreach.expected-email.v2\\0creator@example.com",
+      "expectedEmailHmac": "v2_KgCjvlDPyPrg-JKqwr82a1hd5Gd8gV7axDPdQe60iUY",
+      "payloadObject": {
+        "purpose": "creator_application",
+        "keyId": "test-outreach-current-v2",
+        "expiresAt": 1784336400000,
+        "programId": "view-cpm",
+        "campaignId": "campaign-summer",
+        "outreachId": "outreach-001",
+        "traceId": "tr_contract_trace_001",
+        "expectedEmailHmac": "v2_KgCjvlDPyPrg-JKqwr82a1hd5Gd8gV7axDPdQe60iUY"
+      },
+      "payloadJsonUtf8": "{\"purpose\":\"creator_application\",\"keyId\":\"test-outreach-current-v2\",\"expiresAt\":1784336400000,\"programId\":\"view-cpm\",\"campaignId\":\"campaign-summer\",\"outreachId\":\"outreach-001\",\"traceId\":\"tr_contract_trace_001\",\"expectedEmailHmac\":\"v2_KgCjvlDPyPrg-JKqwr82a1hd5Gd8gV7axDPdQe60iUY\"}",
+      "payloadBase64urlAndSigningBytesUtf8": "eyJwdXJwb3NlIjoiY3JlYXRvcl9hcHBsaWNhdGlvbiIsImtleUlkIjoidGVzdC1vdXRyZWFjaC1jdXJyZW50LXYyIiwiZXhwaXJlc0F0IjoxNzg0MzM2NDAwMDAwLCJwcm9ncmFtSWQiOiJ2aWV3LWNwbSIsImNhbXBhaWduSWQiOiJjYW1wYWlnbi1zdW1tZXIiLCJvdXRyZWFjaElkIjoib3V0cmVhY2gtMDAxIiwidHJhY2VJZCI6InRyX2NvbnRyYWN0X3RyYWNlXzAwMSIsImV4cGVjdGVkRW1haWxIbWFjIjoidjJfS2dDanZsRFB5UHJnLUpLcXdyODJhMWhkNUdkOGdWN2F4RFBkUWU2MGlVWSJ9",
+      "signatureBase64url": "ZTwIC9v-rMxUS2ngnmqykdX0lxTcFdlwqZqkKljmtJU",
+      "token": "eyJwdXJwb3NlIjoiY3JlYXRvcl9hcHBsaWNhdGlvbiIsImtleUlkIjoidGVzdC1vdXRyZWFjaC1jdXJyZW50LXYyIiwiZXhwaXJlc0F0IjoxNzg0MzM2NDAwMDAwLCJwcm9ncmFtSWQiOiJ2aWV3LWNwbSIsImNhbXBhaWduSWQiOiJjYW1wYWlnbi1zdW1tZXIiLCJvdXRyZWFjaElkIjoib3V0cmVhY2gtMDAxIiwidHJhY2VJZCI6InRyX2NvbnRyYWN0X3RyYWNlXzAwMSIsImV4cGVjdGVkRW1haWxIbWFjIjoidjJfS2dDanZsRFB5UHJnLUpLcXdyODJhMWhkNUdkOGdWN2F4RFBkUWU2MGlVWSJ9.ZTwIC9v-rMxUS2ngnmqykdX0lxTcFdlwqZqkKljmtJU"
+    }
+  },
+  "identifierMapping": {
+    "campaignId": {
+      "canonicalFixtureValue": "campaign-summer",
+      "runtimeProducerStatus": "included_only_when_outreach_token_v2_signature_program_and_expected_email_match_verify",
+      "producerBehavior": "Portal v2 durable producers include campaignId only through the branded verifiedOutreach token boundary after exact-envelope, signature, expiry, key-id, identifier, traceId, Apply programId, and normalized expected-email HMAC verification; arbitrary subject and UTM candidates are removed."
+    },
+    "outreachId": {
+      "canonicalFixtureValue": "outreach-001",
+      "runtimeProducerStatus": "included_only_when_outreach_token_v2_signature_program_and_expected_email_match_verify",
+      "producerBehavior": "Portal v2 durable producers include outreachId only through the branded verifiedOutreach token boundary after exact-envelope, signature, expiry, key-id, identifier, traceId, Apply programId, and normalized expected-email HMAC verification; outreachIdHmac, arbitrary subject, and UTM candidates are removed."
+    },
+    "fixtureContract": "All six canonical cross-system fixtures include campaignId=campaign-summer and outreachId=outreach-001. Portal runtime producers include those optional identifiers only from a verified outreach token v2 whose programId equals the Apply programId and whose expectedEmailHmac matches the normalized submitted email.",
+    "schemaAllowance": "The optional subject fields remain unchanged in schema.json and are populated only through the verified outreach-token producer boundary."
+  },
+  "portalVideoDeliveryG007": {
+    "boundaryLabel": "Portal producer/delivery worker only; no Flu receiver implementation",
+    "eventNames": [
+      "video.submitted",
+      "uid.guide-email.requested"
+    ],
+    "uidGuideEligibility": "Only Portal-produced uid.guide-email.requested with payload.deliveryReason=resend; initial guide and every other Portal event fail closed.",
+    "endpointEnvironmentVariable": "SCP_INTEGRATION_EVENT_V2_ENDPOINT_URL",
+    "endpointRule": "configured HTTPS endpoint without credentials, query, or fragment",
+    "stateTransitions": [
+      "submitted -> delivery_queued",
+      "delivery_queued -> leased",
+      "leased -> delivered",
+      "leased -> retryable_failed -> delivery_queued -> leased",
+      "leased -> dead_letter"
+    ],
+    "receiptResponse": {
+      "duplicateStatus": 200,
+      "acceptedStatuses": [201],
+      "contentType": "application/json",
+      "schemaVersion": "scp.integration-event-v2.flu-receipt.v1",
+      "exactKeys": [
+        "schemaVersion",
+        "receiver",
+        "status",
+        "eventId",
+        "identitySha256",
+        "bodySha256",
+        "acceptedAt"
+      ],
+      "bindingRule": "eventId, identitySha256, and bodySha256 must exactly match the revalidated immutable outbox; acceptedAt is strict RFC3339 and not earlier than createdAt",
+      "rawResponsePersistence": "forbidden"
+    },
+    "retry": {
+      "retryableStatuses": [202, 408, 425, 429, "5xx"],
+      "nonretryableStatuses": [400, 401, 403, 409, "other 4xx", "invalid receipt"],
+      "backoff": "deterministic min(baseSeconds * 2^(attemptNumber - 1), maxSeconds); no jitter",
+      "maxAttemptsEnvironmentVariable": "SCP_INTEGRATION_EVENT_V2_MAX_ATTEMPTS"
+    },
+    "leaseSafety": {
+      "requestTimeoutMilliseconds": 10000,
+      "minimumLeaseSeconds": 15,
+      "completionGraceMilliseconds": 5000,
+      "parallelismMaximum": 4,
+      "clockRule": "renewal, signing, and completion each read a fresh current clock; scheduler start time is not reused",
+      "casRule": "renewal and completion require exact owner, expiry, attempt, and delivery revision and reject expired leases"
+    },
+    "legacyVideoIntakeCompatibility": {
+      "deliverable": false,
+      "status": "v2_owned",
+      "deliveryOwner": "integration_event_v2",
+      "drainRule": "legacy leasing excludes v2_owned; older unmarked candidates are cross-checked by videoSubmissionId against the v2 video.submitted outbox, converted to v2_owned, and skipped; the sender rejects the ownership marker before request construction"
+    },
+    "resend": "G006 queued requests are separately CAS-leased and consumed against the same immutable event; receipt history is append-only and the original delivered receipt remains intact",
+    "scheduler": {
+      "route": "/api/internal/integration-event-v2/delivery/run",
+      "body": {},
+      "authentication": "Google Scheduler OIDC with exact direct Cloud Run audience, caller service account, job resource, and bounded schedule time",
+      "provisioningOwner": "G009"
+    },
+    "localHarnessLabel": "Portal-local HTTP receiver harness; not Flu; not final Portal-Flu E2E"
+  },
+  "uidGuideDeliveryMaterial": {
+    "boundaryLabel": "Portal boundary — private material retrieval only; not Flu implementation",
+    "owner": "portal",
+    "consumerOwner": "flu",
+    "integrationEventChange": false,
+    "callAfter": "Portal has durably persisted state=delivered plus the exact hash-bound Flu accepted receipt for the immutable Portal-produced uid.guide-email.requested event with payload.deliveryReason=resend",
+    "endpoint": {
+      "method": "POST",
+      "path": "/api/internal/flu/integration-event-v2/uid-guide-delivery-material",
+      "contentType": "application/json",
+      "responseCacheControl": "private, no-store, max-age=0"
+    },
+    "authentication": {
+      "secretEnvironmentVariable": "SCP_FLU_APPLICATION_COMMAND_SECRET",
+      "minimumSecretCharacters": 32,
+      "timestampHeader": "x-scp-timestamp",
+      "idempotencyHeader": "x-scp-idempotency-key",
+      "eventIdentityHeader": "x-scp-event-id",
+      "signatureHeader": "x-scp-signature",
+      "signatureAlgorithm": "HMAC-SHA-256",
+      "signatureMessage": "x-scp-timestamp + LF + x-scp-idempotency-key + LF + exact raw JSON request body",
+      "signatureFormat": "sha256=<64 lowercase hex characters>",
+      "freshnessSeconds": 300,
+      "identityRule": "x-scp-idempotency-key, x-scp-event-id, and body.eventId must be the same accepted eventId"
+    },
+    "requestBody": {
+      "exactKeysOnly": [
+        "eventId",
+        "applicationId",
+        "uidGrantId"
+      ],
+      "subjectRule": "applicationId and uidGrantId must exactly equal the stored event.subject values"
+    },
+    "deliveryStateContract": {
+      "transitions": [
+        "submitted",
+        "delivery_queued",
+        "leased",
+        "delivered",
+        "retryable_failed",
+        "dead_letter"
+      ],
+      "producerCompatibility": "Current Portal video and Admin UID-resend producers continue to create the existing exact delivery_queued record; immutable event, body, ids, and hashes are not rebuilt during later delivery transitions.",
+      "immutableIdentityBody": {
+        "fields": [
+          "id",
+          "schemaVersion",
+          "event",
+          "body",
+          "identitySha256",
+          "bodySha256",
+          "createdAt"
+        ],
+        "validation": "Validate deterministic eventId, canonical body, schemaVersion, both SHA-256 bindings, createdAt=event.occurredAt, exact event keys/types/timestamps, and the integration-event privacy denylist independently from delivery state."
+      },
+      "releaseRequiredState": "delivered",
+      "deniedStates": [
+        "submitted",
+        "delivery_queued",
+        "leased",
+        "retryable_failed",
+        "dead_letter"
+      ],
+      "deliveredRecordExactKeys": [
+        "id",
+        "schemaVersion",
+        "event",
+        "body",
+        "identitySha256",
+        "bodySha256",
+        "state",
+        "createdAt",
+        "fluReceipt"
+      ],
+      "fluReceipt": {
+        "schemaVersion": "scp.integration-event-v2.flu-receipt.v1",
+        "exactKeys": [
+          "schemaVersion",
+          "receiver",
+          "status",
+          "eventId",
+          "identitySha256",
+          "bodySha256",
+          "acceptedAt"
+        ],
+        "receiver": "flu",
+        "status": "accepted",
+        "bindings": {
+          "eventId": "must exactly equal outbox.id and outbox.event.eventId",
+          "identitySha256": "must exactly equal outbox.identitySha256 after immutable event revalidation",
+          "bodySha256": "must exactly equal outbox.bodySha256 after canonical body revalidation"
+        },
+        "acceptedAt": "strict RFC3339 date-time not earlier than outbox.createdAt",
+        "sensitiveMaterial": "forbidden; receipt is metadata-only and may not contain recipient, UID, bearer, URL, authorization, secret, body copy, or provider message content"
+      }
+    },
+    "portalAuthorization": [
+      "load the outbox document by eventId",
+      "revalidate immutable identity/body fields independently from delivery state",
+      "require the exact delivered record keys and metadata-only fluReceipt bound to eventId, identitySha256, bodySha256, and an acceptedAt timestamp not earlier than createdAt",
+      "deny submitted, delivery_queued, leased, retryable_failed, dead_letter, malformed delivered, or tampered delivered records",
+      "allow only source=portal, eventName=uid.guide-email.requested, and deliveryReason=resend",
+      "require the exact matching application program/locale and issued, unexpired replacement grant for scp-application-onboarding-v1",
+      "deny original, superseded, consumed, revoked, expired, cross-application, or mismatched grants"
+    ],
+    "successResponse": {
+      "schemaVersion": "scp.integration-event-v2.uid-guide-delivery-material.v1",
+      "identityFields": [
+        "eventId",
+        "applicationId",
+        "uidGrantId"
+      ],
+      "deliveryFields": [
+        "recipientEmail",
+        "uidGuideUrl",
+        "expiresAt"
+      ],
+      "uidGuideUrlProfile": "absolute Portal URL with exact path /onboarding/uid and only the opaque grant query parameter"
+    },
+    "idempotency": "A valid retry for the same accepted event and exact request returns the same grant material while the Portal release audit is created at most once; a stale signature or changed identity/body is denied.",
+    "genericDenial": {
+      "status": 403,
+      "error": "uid_guide_delivery_material_unavailable",
+      "appliesTo": "wrong event/grant/application/header, stale or tampered HMAC, cookie, bearer, malformed body, unavailable configuration, and inactive grant"
+    },
+    "privacy": {
+      "responseOnly": true,
+      "neverPersistOrLog": [
+        "recipientEmail material copy",
+        "opaque grant bearer",
+        "raw UID",
+        "uidGuideUrl",
+        "HMAC secret"
+      ],
+      "safePersistentEvidence": [
+        "eventId",
+        "applicationId",
+        "uidGrantId",
+        "state=delivered and the exact metadata-only hash-bound Flu receipt",
+        "redacted idempotent release audit"
+      ]
+    },
+    "fluImplementation": "outside this Portal handoff; Flu owns receiver acceptance, mail rendering, outbox, transport, retry, and delivery audit, while Portal G007 may persist only the defined metadata-only accepted receipt on the existing immutable outbox record"
+  },
+  "portalCallbackReceiverG008": {
+    "owner": "portal",
+    "producerOwner": "flu",
+    "implementationBoundary": "Portal receiver only; no Flu receiver, producer, collector, review, or adapter implementation",
+    "acceptedEventNames": [
+      "video.review-status.changed",
+      "video.view-snapshot.updated"
+    ],
+    "endpoint": {
+      "method": "POST",
+      "path": "/api/internal/flu/integration-event-v2/events",
+      "contentType": "application/json",
+      "maximumRawBodyBytes": 32768,
+      "successStatuses": {
+        "newDurableAcceptance": 201,
+        "exactDuplicate": 200,
+        "acceptedAsyncForbidden": 202
+      },
+      "cacheControl": "private, no-store, max-age=0",
+      "query": "forbidden",
+      "origin": "forbidden",
+      "authorization": "forbidden",
+      "cookie": "forbidden",
+      "transport": "HTTPS only; optional x-forwarded-proto must be https",
+      "rateLimiting": "bounded pre-auth global and post-auth key-slot rate limits; no event body or secret is used as the limiter key"
+    },
+    "authentication": {
+      "wireProfile": "wire.signing and wire.headers",
+      "exactRawBodyHmac": true,
+      "timestampSkewSeconds": 300,
+      "headerBodyEventIdMatchRequired": true,
+      "currentKey": {
+        "keyIdEnvironmentVariable": "SCP_INTEGRATION_EVENT_V2_CURRENT_KEY_ID",
+        "secretEnvironmentVariable": "SCP_INTEGRATION_EVENT_V2_CURRENT_KEY_SECRET"
+      },
+      "previousKey": {
+        "keyIdEnvironmentVariable": "SCP_INTEGRATION_EVENT_V2_PREVIOUS_KEY_ID",
+        "secretEnvironmentVariable": "SCP_INTEGRATION_EVENT_V2_PREVIOUS_KEY_SECRET",
+        "optionalRotationOverlapOnly": true
+      },
+      "unknownRetiredOrStaleTamperedSignatureStatus": 401,
+      "privacyDenylist": [
+        "Authorization",
+        "Cookie",
+        "bearer",
+        "raw email",
+        "raw UID"
+      ]
+    },
+    "authoritativeJoin": {
+      "requiredPortalRecords": [
+        "scp_application_video_submissions",
+        "scp_creator_applications",
+        "scp_integration_event_v2_outbox delivered video.submitted with hash-bound Flu accepted receipt",
+        "scp_flu_video_intake_outbox compatibility record",
+        "application_onboarding_audit_events creation evidence"
+      ],
+      "exactFields": [
+        "programId",
+        "applicationId",
+        "videoSubmissionId",
+        "youtubeVideoId",
+        "traceId",
+        "campaignId",
+        "outreachId"
+      ],
+      "reviewIdRule": "the first authenticated, fully joined review event establishes the reviewId; every later review or snapshot must match it exactly",
+      "trackingIdRule": "the first accepted approved snapshot establishes the trackingId; every later snapshot must match it exactly",
+      "failure": "HTTP 409 without receipt, audit, subject head, pipeline head, current projection, or G006 evidence mutation"
+    },
+    "durability": {
+      "transaction": "one Firestore transaction/CAS spans replay, event receipt, subject revision, pipeline trace, current review/snapshot, G006 evidence, and append-only audit",
+      "collections": {
+        "eventReceipts": {
+          "name": "scp_integration_event_v2_receiver_receipts",
+          "schemaVersion": "scp.integration-event-v2.receiver-receipt.v1"
+        },
+        "auditEvents": {
+          "name": "scp_integration_event_v2_receiver_audit_events",
+          "schemaVersion": "scp.integration-event-v2.receiver-audit.v1"
+        },
+        "signatureReplays": {
+          "name": "scp_integration_event_v2_receiver_signature_replays",
+          "schemaVersion": "scp.integration-event-v2.receiver-signature.v1"
+        },
+        "subjectHeads": {
+          "name": "scp_integration_event_v2_receiver_subject_heads",
+          "schemaVersion": "scp.integration-event-v2.receiver-subject-head.v1"
+        },
+        "pipelineHeads": {
+          "name": "scp_integration_event_v2_receiver_pipeline_heads",
+          "schemaVersion": "scp.integration-event-v2.receiver-pipeline-head.v1"
+        },
+        "currentReviews": {
+          "name": "scp_integration_event_v2_current_video_reviews",
+          "schemaVersion": "scp.integration-event-v2.current-video-review.v1"
+        },
+        "currentSnapshots": {
+          "name": "scp_integration_event_v2_current_video_snapshots",
+          "schemaVersion": "scp.integration-event-v2.current-video-snapshot.v1"
+        },
+        "applicationVideoAdminEvidence": {
+          "name": "scp_application_video_admin_evidence",
+          "schemaVersion": "scp.application-video-admin-evidence.v1"
+        }
+      },
+      "eventId": "immutable global key; same logical identity is duplicate success and changed identity is HTTP 409",
+      "signatureReplay": "an accepted identical signed retry resolves only through its matching durable receipt; unmatched reuse is HTTP 409",
+      "revision": "strictly monotonic per frozen event-specific subject; stale or equal-different revision is HTTP 409",
+      "trace": "the application pipeline traceId is immutable across video, review, and snapshot"
+    },
+    "reviewRule": {
+      "statuses": [
+        "pending",
+        "approved",
+        "rejected",
+        "changes_requested"
+      ],
+      "publicReasonOnly": true,
+      "duplicateDoesNotReapply": true,
+      "nonApprovedTransition": "immediately removes view snapshot fields from creator/Admin evidence and marks retained safe snapshot history as suppressed"
+    },
+    "snapshotRule": {
+      "acceptWhen": "payload.reviewStatus=approved and co-stored current authoritative review is approved for the exact video, reviewId, trackingId continuity, and traceId",
+      "rejectWhen": [
+        "before approval",
+        "after a non-approved review",
+        "reviewId mismatch",
+        "trackingId mismatch",
+        "stale revision",
+        "missing authoritative link"
+      ],
+      "persistedMetadataOnly": [
+        "viewCount",
+        "collectedAt",
+        "trackingId"
+      ],
+      "exposure": "approved_only",
+      "collectorImplementation": "forbidden_outside_portal_scope"
+    },
+    "responseReceipt": {
+      "schemaVersion": "scp.integration-event-v2.portal-receipt.v1",
+      "receiver": "portal",
+      "status": "accepted",
+      "exactKeys": [
+        "schemaVersion",
+        "receiver",
+        "status",
+        "eventId",
+        "identitySha256",
+        "bodySha256",
+        "acceptedAt"
+      ]
+    },
+    "localHarness": {
+      "label": "Portal-only signed callback route and Firestore emulator harness; no Flu implementation; not final joint E2E",
+      "finalJointE2E": false
+    },
+    "finalJointE2E": {
+      "status": "pending_separate_flu_session_adoption",
+      "required": "Flu adopts the frozen schema/fixtures and implements its producer/collector/review boundary in a separate Flu-owned session before joint live E2E"
+    }
+  },
+  "routing": {
+    "application.submitted": {
+      "producerOwner": "portal",
+      "consumerOwner": "flu",
+      "direction": "portal_to_flu",
+      "portalBoundary": "durable_outbox_producer",
+      "endpoint": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "receipt": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_event_receiver",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    },
+    "uid.guide-email.requested": {
+      "producerOwner": "portal",
+      "consumerOwner": "flu",
+      "direction": "portal_to_flu",
+      "portalBoundary": "durable_outbox_producer",
+      "endpoint": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "receipt": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_event_receiver",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    },
+    "uid.submitted": {
+      "producerOwner": "portal",
+      "consumerOwner": "flu",
+      "direction": "portal_to_flu",
+      "portalBoundary": "durable_outbox_producer",
+      "endpoint": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "receipt": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_event_receiver",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    },
+    "video.submitted": {
+      "producerOwner": "portal",
+      "consumerOwner": "flu",
+      "direction": "portal_to_flu",
+      "portalBoundary": "durable_outbox_producer",
+      "endpoint": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "receipt": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_event_receiver",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    },
+    "video.review-status.changed": {
+      "producerOwner": "flu",
+      "consumerOwner": "portal",
+      "direction": "flu_to_portal",
+      "portalBoundary": "signed_callback_receiver",
+      "endpoint": {
+        "owner": "portal",
+        "path": "/api/internal/flu/integration-event-v2/events",
+        "successStatuses": [201, 200],
+        "status": "implemented_in_portal_G008"
+      },
+      "receipt": {
+        "owner": "portal",
+        "status": "durable_portal_receiver_receipt_implemented_in_G008"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_callback_producer_adapter",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    },
+    "video.view-snapshot.updated": {
+      "producerOwner": "flu",
+      "consumerOwner": "portal",
+      "direction": "flu_to_portal",
+      "portalBoundary": "signed_callback_receiver",
+      "endpoint": {
+        "owner": "portal",
+        "path": "/api/internal/flu/integration-event-v2/events",
+        "successStatuses": [201, 200],
+        "status": "implemented_in_portal_G008"
+      },
+      "receipt": {
+        "owner": "portal",
+        "status": "durable_portal_receiver_receipt_implemented_in_G008"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_callback_producer_adapter",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    },
+    "creator.channel-verified": {
+      "producerOwner": "portal",
+      "consumerOwner": "flu",
+      "direction": "portal_to_flu",
+      "portalBoundary": "durable_outbox_producer",
+      "authority": "creator_owned_youtube_oauth_only",
+      "subjectFields": ["subject.programId", "subject.applicationId", "subject.portalCreatorId"],
+      "excludedSubjectFields": ["subject.channelId"],
+      "verifiedChannelHome": "payload.verifiedChannelId",
+      "createOnceAxis": "canonical JSON array of [eventName, subject.programId, subject.applicationId, subject.portalCreatorId]",
+      "portalEmissionLedger": "Portal queues at most one channel-verified event per portalCreatorId for all time, so a later re-verification against a different channel never produces a second event on this axis",
+      "portalEmissionFlag": "SCP_CREATOR_CHANNEL_VERIFIED_EVENT_ENABLED, default off until Flu has deployed its receiver for this event name",
+      "endpoint": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "receipt": {
+        "owner": "flu",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "fluAdapterOrReceiver": {
+        "role": "signed_event_receiver",
+        "status": "outside_G013_pending_separate_flu_sha_adoption"
+      },
+      "finalJointE2E": "outside_G013_pending_separate_flu_sha_adoption"
+    }
+  },
+  "boundaries": {
+    "portalOwns": [
+      "schema.json",
+      "canonical fixtures",
+      "manifest hashes",
+      "Portal durable outbox producer boundary",
+      "Portal private uid.guide-email.requested resend material retrieval boundary",
+      "Portal signed durable callback receiver for review and view snapshot events",
+      "Portal local contract harness"
+    ],
+    "fluRepositoryAccess": "none",
+    "fluImplementation": "Flu callback producer, review, collector, and adapter implementation is outside Portal G008 and pending separate Flu SHA adoption.",
+    "localHarnessLabel": "Portal-local integration-event-v2 harness; non-Flu implementation; non-final joint E2E",
+    "finalJointE2E": {
+      "status": "pending_flu_sha_adoption",
+      "scope": "outside_portal_G008",
+      "requiredBeforeFinal": "Run joint Portal-to-Flu and Flu-to-Portal E2E after separate Flu SHA adoption of this schema and fixture aggregate.",
+      "adoptedFluSha": null
+    }
+  }
+}

@@ -1,0 +1,37 @@
+rules_version = '2';
+// SEC-P0-004: 클라이언트 직접 쓰기 전면 금지 — 쓰기/집계는 Functions(Admin SDK)만.
+// AUTH-P0: 신규 가입자 Guest, Guest 전면 차단, 서버 최종 권한 검증(custom claim role).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function role() { return signedIn() ? request.auth.token.role : 'guest'; }
+    function isNonGuest() { return signedIn() && role() in ['super_admin', 'admin', 'manager', 'viewer']; }
+    function isStaff() { return role() in ['super_admin', 'admin', 'manager']; }
+    function isAdmin() { return role() in ['super_admin', 'admin']; }
+
+    // 모든 쓰기 차단 (Functions 경유만)
+    match /{document=**} {
+      allow write: if false;
+    }
+
+    // 읽기 — 인증 + 역할 기반 (Guest 차단)
+    match /creators/{id}     { allow read: if isStaff(); }
+    // Campaign ownership is resolved by callables from verified identity/organization.
+    // Direct client reads would bypass that boundary; Admin SDK remains unaffected.
+    match /campaigns/{id}    { allow read: if false; }
+    match /contracts/{id}    { allow read: if isStaff(); }
+    match /reviews/{id}      { allow read: if isStaff(); }
+    match /feedback/{id}     { allow read: if isStaff(); }
+    match /behavior_logs/{id}{ allow read: if isAdmin(); }   // 감사 로그 = Admin+
+    match /cost_logs/{id}    { allow read: if isAdmin(); }
+    match /llm_usage/{id}    { allow read: if isAdmin(); }
+    // Peoply 디렉터리 캐시(일 1회 동기화 스냅샷) — 서버(Functions Admin SDK)만 읽고 쓴다.
+    // 클라이언트가 직접 읽으면 org 판정 원천이 두 갈래로 갈라진다(NET-P0-012 취지와 동일).
+    match /peoply_directory_cache/{id}      { allow read: if false; }
+    match /peoply_directory_cache_meta/{id} { allow read: if false; }
+    match /members/{id}      { allow read: if isAdmin() || (isNonGuest() && request.auth.uid == id); }
+    match /settings/{id}     { allow read: if isStaff(); }
+    // 티켓 위젯(버그 제보) — 남의 제보가 보이면 안 되므로 클라 read 도 닫는다. 열람은 listTickets callable(admin+).
+    match /tickets/{id}      { allow read: if false; }
+  }
+}

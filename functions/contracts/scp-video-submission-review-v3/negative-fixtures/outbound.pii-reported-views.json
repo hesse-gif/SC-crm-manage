@@ -1,0 +1,12 @@
+{
+  "caseId": "outbound.pii-reported-views",
+  "surface": "portal_outbound_review_event",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.upsert.json",
+  "mutation": {
+    "path": "/payload/reportedViews",
+    "value": 1234
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "record_invalid",
+  "notes": "Outbound review events must not include reportedViews; that value is diagnostic evidence only and never a review/settlement authority."
+}

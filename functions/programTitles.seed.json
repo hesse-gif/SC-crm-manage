@@ -1,0 +1,95 @@
+{
+  "_readme": [
+    "Program title registry — the SINGLE data source for every per-title fact in the repo.",
+    "Adding a game title to a program = adding ONE entry to `titles` here and running",
+    "`npm run build:mail-templates`. Nothing else. No consumer may branch on a title id.",
+    "Consumers: functions/programTitles.ts (server resolver + rubric/ingress), and",
+    "scripts/build-mail-templates.mjs (renders the per-title mail blocks into the reviewed",
+    "HTML masters between the `program-titles:*` markers).",
+    "sampleVideos carry no thumbnailUrl on purpose: the mail sanitizer demotes every image",
+    "that is not on an official Supercent host to its alt text (functions/mailCompiler.ts",
+    "sanitizeBodyImage), which is exactly what leaked `Play <name> on YouTube` as visible",
+    "text in the shipped mail. The rendered rows use a text tile instead of a remote image."
+  ],
+  "registryVersion": "program-titles/v1",
+  "programs": [
+    {
+      "programId": "pg-super-creator-partners",
+      "requiredProgramHashtags": [
+        "#SuperCreatorPartners",
+        "#Supercent"
+      ],
+      "titles": [
+        {
+          "id": "xp-hero",
+          "name": "XP Hero",
+          "default": true,
+          "storeUrl": "https://play.google.com/store/apps/details?id=io.supercent.weaponrpg",
+          "requiredHashtag": "#XPHero",
+          "brandedDomains": ["xphero.onelink.me", "xphero.go.link"],
+          "driveFolderUrl": "https://drive.google.com/drive/folders/1szFSKPHUfUYufHoOPbECflTcgoKSOwyP",
+          "sampleVideos": [
+            {
+              "title": "XPHero_CH2_Ragnaros_Clear",
+              "youtubeUrl": "https://youtube.com/shorts/tr5biGmUUdM?si=lIlPMbF5524Bm2aR"
+            },
+            {
+              "title": "XPHero_CH3_Gwima_Clear-VoidLord-Reveal",
+              "youtubeUrl": "https://youtube.com/shorts/bhavfuQOnhM"
+            },
+            {
+              "title": "XPHero_CH1_Intro_FirstPlay-Tutorial",
+              "youtubeUrl": "https://youtu.be/ibwOjFLxJcQ"
+            },
+            {
+              "title": "XPHero_CH2_FrostKing_Hana-Review-Try-Clear",
+              "youtubeUrl": "https://youtu.be/2_xkoYvArIg"
+            },
+            {
+              "title": "New Hero gacha upgrade",
+              "youtubeUrl": "https://youtu.be/adYck4nldro"
+            },
+            {
+              "title": "S tier weapon review chapter2",
+              "youtubeUrl": "https://youtu.be/0jAW5WB-FJw"
+            },
+            {
+              "title": "Traits chapter3 VoidLord clear",
+              "youtubeUrl": "https://youtu.be/rz-fzcE6fkY"
+            }
+          ]
+        },
+        {
+          "id": "snake-clash",
+          "name": "Snake Clash",
+          "storeUrl": "https://play.google.com/store/apps/details?id=io.supercent.linkedcubic",
+          "requiredHashtag": "#SnakeClash",
+          "brandedDomains": [],
+          "driveFolderUrl": "https://drive.google.com/drive/folders/17fJQ-ubcxkko2-fub-yatlNORUiILxnM",
+          "sampleVideos": [
+            {
+              "title": "Supercent1.snakeclash_pororoskin",
+              "youtubeUrl": "https://youtu.be/Y8KfozI9QsI"
+            },
+            {
+              "title": "Supercent2.snakeclash_loppyskin",
+              "youtubeUrl": "https://youtu.be/HQPNFrmxUR4"
+            },
+            {
+              "title": "Supercent3.snakeclash_crongskin",
+              "youtubeUrl": "https://youtu.be/nCpoOqTrTfg"
+            },
+            {
+              "title": "Supercent4.snakeclash_friendskin",
+              "youtubeUrl": "https://youtu.be/f7PCahE0PQU"
+            },
+            {
+              "title": "Supercent5.snakeclash_pororoskin",
+              "youtubeUrl": "https://youtu.be/IakXTHwDouU"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

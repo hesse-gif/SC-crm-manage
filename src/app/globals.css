@@ -1,0 +1,138 @@
+@font-face {
+  font-family: "Pretendard Std Variable";
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: swap;
+  src: url("/fonts/pretendard-std/PretendardStdVariable.woff2") format("woff2-variations");
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* haru-ui 3단 토큰: Primitive → Semantic. UI에서는 시맨틱(아래)만 사용. */
+:root {
+  /* Background */
+  --canvas: 255 255 255;
+  --surface: 250 250 250;
+  --paper: 255 255 255;
+  --line: 232 232 232;
+
+  /* Accent (단일 액센트 = 연한 페리윙클 블루) */
+  --accent: 110 138 242;
+  --accent-soft: 238 242 254;
+
+  /* Text/Icon 위계 4단계 */
+  --ink: 23 23 23;
+  --ink-2: 107 107 107;
+  --ink-3: 150 150 150;
+  --ink-4: 194 194 194;
+
+  /* Fill (칩/배지 채움) */
+  --fill: 245 245 245;
+  --fill-2: 237 237 237;
+  --fill-3: 224 224 224;
+
+  /* Status */
+  --ok: 26 143 99;
+  --ok-soft: 230 245 238;
+  --warn: 199 122 10;
+  --warn-soft: 250 242 228;
+  --danger: 217 45 69;
+  --danger-soft: 251 233 236;
+  --info: 47 109 246;
+  --info-soft: 233 240 254;
+
+  /* AI 메시지 식별 액센트 — 블루 액센트와 구분되는 바이올렛 */
+  --ai: 139 92 246;
+  --ai-soft: 243 236 253;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    @apply bg-surface text-ink font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* haru-ui: 큰/굵은 제목 ↔ 절제된 본문 대비, 자간 미세조정 */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+  ::selection {
+    background: rgb(var(--accent) / 0.18);
+  }
+}
+
+@layer components {
+  /* 얇은 커스텀 스크롤바 (Quiet UI) */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--ink-4)) transparent;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background: rgb(var(--ink-4) / 0.6);
+    border-radius: 9999px;
+  }
+
+  .feed-landing-pulse {
+    animation: feed-landing-pulse 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
+  }
+}
+
+@keyframes feed-landing-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  18% {
+    transform: translateY(-3px);
+  }
+  36% {
+    transform: translateY(2px);
+  }
+  54% {
+    transform: translateY(-2px);
+  }
+  72% {
+    transform: translateY(1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-landing-pulse {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+/* ─── 티켓 위젯 테마 (supercent-io/ticket-widget-skill · ticket-theme.css) ───────────────
+ * 언레이어(@layer 밖)로 둔다 — 레이어 안이면 Tailwind 유틸리티에 밀려 보내기 버튼 배경이 빠진다.
+ * 포인트 색은 haru-ui --accent(110 138 242 = #6E8AF2)에 연결. hover 한 단계 밝게, active 한 단계 어둡게. */
+:root {
+  --ticket-accent: rgb(var(--accent));
+  --ticket-accent-hover: #8199f5;
+  --ticket-accent-active: #5a76de;
+  --ticket-accent-on: #ffffff;
+}
+.ticket-send:not(:disabled) {
+  background: var(--ticket-accent);
+  color: var(--ticket-accent-on);
+}
+.ticket-send:not(:disabled):hover { background: var(--ticket-accent-hover); }
+.ticket-send:not(:disabled):active { background: var(--ticket-accent-active); }
+/* 딤은 색이 아니라 블러로만 — 뒤 화면 맥락을 남긴다 */
+.ticket-dialog::backdrop {
+  background: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}

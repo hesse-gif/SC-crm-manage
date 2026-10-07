@@ -1,0 +1,13 @@
+export { ManagementProfileShell, DEFAULT_MANAGEMENT_TAB } from "./ManagementProfileShell";
+export type { ManagementCurrentAction } from "./ManagementProfileShell";
+export { ManagementProfileHeader } from "./ManagementProfileHeader";
+export type { ManagementHeaderIdentity, ManagementPartnerLink } from "./ManagementProfileHeader";
+export { ManagementNowStrip } from "./ManagementNowStrip";
+export type { ManagementEnrollmentOption } from "./ManagementNowStrip";
+export { ManagementJourneyTab } from "./ManagementJourneyTab";
+export { ManagementOutreachTab } from "./ManagementOutreachTab";
+export { ManagementApplicationsTab } from "./ManagementApplicationsTab";
+export { ManagementOnboardingTab } from "./ManagementOnboardingTab";
+export { ManagementContentReviewTab } from "./ManagementContentReviewTab";
+export { ManagementChannelIntelligenceTab } from "./ManagementChannelIntelligenceTab";
+export { ManagementAuditTab } from "./ManagementAuditTab";

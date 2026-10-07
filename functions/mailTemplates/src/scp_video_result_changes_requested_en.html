@@ -1,0 +1,107 @@
+<!-- W120: 영상 검수 결과 메일 — **변경 요청** 분기.
+     구조는 승인 분기와 같고 두 곳만 다르다: ①결과 문구 ②재제출 CTA({{correction_link}}).
+     재제출 링크는 발송 시점 서명 material 에서만 오므로 조건부 주입이다 — 링크가 없으면 드레인이
+     `correction_link_unavailable` 로 표시하고, 그때는 코드 폴백(텍스트 안내)이 대신 나간다.
+     문서 골격(DOCTYPE/html/head/body)은 의도적으로 없다(기존 6종과 동일 규약).
+     링크는 변수로만 참조한다(W48: 리터럴 URL 금지).
+     ⚠️ W121 컷오버 절차 [적대 리뷰 H2]: 이 마스터는 **코드 폴백**이다.
+     `scp_mail_templates/video_result_mail` 문서가 status:"active" 로 발행돼 있으면 그 문서가
+     이 파일을 이기고(resolveScpMailTemplateOverride), 그 문서의 HTML 은 W121 이전 작성물이라
+     사유 블록이 `<pre>` 가 아니다 — 사유 불릿이 HTML·텍스트 양쪽에서 한 줄로 뭉개진다.
+     따라서 `settings/scp_video_result_mail_rollout.rejectionMailEnabled` 를 여는 컷오버 때
+     **발행 문서 재발행이 필수 단계**다(반려·변경요청 공용 키 하나: `video_result_mail`).
+     재발행 문안은 이 파일을 정본으로 복사하고, 사유 블록 자리를 `<pre>` 로 유지할 것.
+     발행 문서가 없으면 이 파일이 그대로 나가므로 추가 작업이 없다.
+-->
+
+<!-- Preheader -->
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+Changes are needed before your video can be approved.
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0b0b0b">
+<tr><td align="center" style="padding:0 12px;">
+
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%;">
+
+    <tr>
+      <td style="padding:24px 8px 8px 8px;">
+        <span style="font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:12px; font-weight:600; letter-spacing:0.08em; color:#8a8a8a; text-transform:uppercase;">{{supercent_brand}} &middot; {{program_name}}</span>
+      </td>
+    </tr>
+
+    <!-- Result -->
+    <tr>
+      <td style="padding:8px 8px 4px 8px;">
+        <h1 style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:26px; line-height:1.25; font-weight:700; letter-spacing:-0.02em; color:#ffffff;">Changes requested.</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:8px 8px 16px 8px;">
+        <p style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:15px; line-height:1.6; color:#c9c9c9;">Review result: <strong style="color:#ffffff;">{{video_result_state}}</strong></p>
+      </td>
+    </tr>
+
+    <!-- Submission reference -->
+    <tr>
+      <td style="padding:0 8px 20px 8px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#151515; border-radius:12px;">
+          <tr><td style="padding:18px 20px;">
+            <!-- 2026-09-05 다타이틀: 게임명은 리터럴이 아니라 제출 타이틀의 레지스트리 값이다
+                 (functions/programTitles.seed.json -> videoReviewRubricTitle). 두 번째 타이틀이
+                 붙어도 이 자리는 코드 수정 없이 맞는 이름을 낸다. -->
+            <p style="margin:0 0 8px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Game</p>
+            <p style="margin:0 0 12px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#ffffff;">{{game_title}}</p>
+            <p style="margin:0 0 8px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Video</p>
+            <p style="margin:0 0 12px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#ffffff;">{{video_title}}</p>
+            <p style="margin:0 0 4px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">{{youtube_url}}</p>
+            <p style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Reference {{submission_ref}} &middot; Reviewed {{decided_date}}</p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Reason guidance (reasonCode 기반 문안이 이 자리에 들어온다).
+         W121: 운영자가 사유 태그를 고르면 같은 자리에 **태그 순서대로의 사유 불릿**이 온다.
+         태그를 안 고르면 종전과 같은 한 문장이다.
+         값은 서버 사전이 만든 문구뿐 — 룰 ID·룰명·confidence 퍼센트는 이 메일에 들어가지 않는다.
+
+         ⚠️ 이 자리는 `<p>` 가 아니라 **`<pre>`** 여야 한다(W121 적대 리뷰 H1).
+         발송 어댑터(chat-ai.sendEmail)는 드레인이 만든 text 파트를 쓰지 않고 HTML 을 다시
+         컴파일하며, 그 text 는 artifactFromCompiledHtml 의 htmlToText 파생값이다.
+         htmlToText 는 **CSS 를 보지 않으므로** white-space:pre-line 으로는 줄바꿈이 죽고
+         "• 문구1. • 문구2." 가 한 줄로 뭉개진다. 줄바꿈을 지키는 건 태그(`pre`)뿐이다.
+         `ul`/`li` 는 htmlToText 가 itemPrefix "* " 를 덧붙여 불릿이 두 겹이 되므로 쓰지 않는다. -->
+    <tr>
+      <td style="padding:0 8px 20px 8px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#151515; border-radius:12px;">
+          <tr><td style="padding:18px 20px;">
+            <p style="margin:0 0 8px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:12px; font-weight:600; letter-spacing:0.06em; color:#8a8a8a; text-transform:uppercase;">What needs to change</p>
+            <pre style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:15px; line-height:1.6; color:#e6e6e6; white-space:pre-wrap; word-break:break-word;">{{video_result_message}}</pre>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- CTA -->
+    <tr>
+      <td align="center" style="padding:0 8px 24px 8px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#1aafff; border-radius:40px;">
+          <tr><td align="center">
+            <a href="{{correction_link}}" target="_blank" style="display:inline-block; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:17px; font-weight:700; letter-spacing:-0.01em; color:#ffffff; text-decoration:none; padding:15px 36px; border-radius:40px;">Resubmit your video</a>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Close -->
+    <tr>
+      <td style="padding:0 8px 28px 8px; border-top:1px solid #262626;">
+        <p style="margin:16px 0 0 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Questions about this result? Reply to this email or contact <a href="mailto:scp@supercent.io" style="color:#8a8a8a;">scp@supercent.io</a></p>
+      </td>
+    </tr>
+
+  </table>
+
+</td></tr>
+</table>

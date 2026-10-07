@@ -1,0 +1,12 @@
+{
+  "caseId": "outbound.raw-uid-numeric-identifier",
+  "surface": "portal_outbound_review_event",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.upsert.json",
+  "mutation": {
+    "path": "/subject/partnerId",
+    "value": "1234567890"
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "record_invalid",
+  "notes": "A raw UID-like numeric string cannot be disguised as a stable identity mapping; use a non-PII prefixed identifier or digest."
+}

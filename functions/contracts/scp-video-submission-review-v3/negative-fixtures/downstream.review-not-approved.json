@@ -1,0 +1,13 @@
+{
+  "caseId": "downstream.review-not-approved",
+  "surface": "flu_downstream_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/flu.video.downstream.status_observed.eligible.json",
+  "mutation": {
+    "path": "/payload/projectionId",
+    "value": "projection-before-approval-001"
+  },
+  "recomputeEventId": true,
+  "expectedFailureStage": "authoritative_runtime_join",
+  "expectedErrorCode": "review_not_approved",
+  "notes": "A shape-valid downstream event is accepted only after the same current revision is approved by SCP Automation."
+}

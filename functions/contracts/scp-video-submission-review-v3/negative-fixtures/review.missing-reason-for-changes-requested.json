@@ -1,0 +1,12 @@
+{
+  "caseId": "review.missing-reason-for-changes-requested",
+  "surface": "scp_automation_review_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.changes_requested.json",
+  "mutation": {
+    "path": "/payload/publicReasonCode",
+    "delete": true
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "invalid_event",
+  "notes": "changes_requested, human_review_required, and rejected callbacks require a stable public reason code for creator/Admin display."
+}

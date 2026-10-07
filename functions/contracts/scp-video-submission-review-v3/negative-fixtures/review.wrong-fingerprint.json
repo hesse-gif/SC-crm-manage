@@ -1,0 +1,13 @@
+{
+  "caseId": "review.wrong-fingerprint",
+  "surface": "scp_automation_review_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.approved.json",
+  "mutation": {
+    "path": "/subject/contentFingerprint",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "recomputeEventId": true,
+  "expectedFailureStage": "authoritative_runtime_join",
+  "expectedErrorCode": "content_fingerprint_mismatch",
+  "notes": "The callback is bound to videoSubmissionId + videoRevision + contentFingerprint + policyVersion."
+}

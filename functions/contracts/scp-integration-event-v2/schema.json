@@ -1,0 +1,550 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator.supercent.io/contracts/scp-integration-event-v2/schema.json",
+  "title": "SCP Integration Event v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "eventName",
+    "occurredAt",
+    "source",
+    "traceId",
+    "revision",
+    "subject",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "scp.integration-event.v2"
+    },
+    "eventId": {
+      "type": "string",
+      "pattern": "^evt_[a-f0-9]{32}$"
+    },
+    "eventName": {
+      "enum": [
+        "application.submitted",
+        "uid.guide-email.requested",
+        "uid.submitted",
+        "video.submitted",
+        "video.review-status.changed",
+        "video.view-snapshot.updated",
+        "creator.channel-verified"
+      ]
+    },
+    "occurredAt": {
+      "$ref": "#/$defs/rfc3339DateTime"
+    },
+    "source": {
+      "enum": [
+        "portal",
+        "flu"
+      ]
+    },
+    "traceId": {
+      "type": "string",
+      "pattern": "^tr_[A-Za-z0-9._:-]{8,120}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "subject": {
+      "$ref": "#/$defs/subject"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "application.submitted"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/applicationSubmitted"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "uid.guide-email.requested"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/uidGuideEmailRequested"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "uid.submitted"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/uidSubmitted"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "video.submitted"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/videoSubmitted"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "video.review-status.changed"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/videoReviewStatusChanged"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "video.view-snapshot.updated"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/videoViewSnapshotUpdated"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "eventName"
+        ],
+        "properties": {
+          "eventName": {
+            "const": "creator.channel-verified"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/$defs/creatorChannelVerified"
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "rfc3339DateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]+)?(?:Z|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])$",
+      "$comment": "Strict RFC3339 profile shared with Portal runtime validation: uppercase T/Z, mandatory timezone, real Gregorian date, no leap second."
+    },
+    "freeTextPrivacy": {
+      "type": "string",
+      "pattern": "^(?![\\s\\S]*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,63})(?![\\s\\S]*[Bb][Ee][Aa][Rr][Ee][Rr]\\s+[A-Za-z0-9._~+\\/-]+=*)(?![\\s\\S]*(?:^|[^0-9])[0-9]{8,20}(?:[^0-9]|$))[\\s\\S]*$",
+      "$comment": "Fail-closed for the explicit free-text categories raw email-looking address, case-insensitive Bearer credential, and bare 8-20 digit raw UID-like run. This pattern does not claim to detect every possible secret."
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "programId",
+        "applicationId"
+      ],
+      "properties": {
+        "programId": {
+          "$ref": "#/$defs/id"
+        },
+        "campaignId": {
+          "$ref": "#/$defs/id"
+        },
+        "outreachId": {
+          "$ref": "#/$defs/id"
+        },
+        "applicationId": {
+          "$ref": "#/$defs/id"
+        },
+        "portalCreatorId": {
+          "$ref": "#/$defs/id"
+        },
+        "channelId": {
+          "type": "string",
+          "pattern": "^UC[A-Za-z0-9_-]{22}$"
+        },
+        "uidGrantId": {
+          "$ref": "#/$defs/id"
+        },
+        "uidSubmissionId": {
+          "$ref": "#/$defs/id"
+        },
+        "videoSubmissionId": {
+          "$ref": "#/$defs/id"
+        },
+        "youtubeVideoId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{6,20}$"
+        },
+        "reviewId": {
+          "$ref": "#/$defs/id"
+        },
+        "trackingId": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "applicationSubmitted": {
+      "properties": {
+        "source": {
+          "const": "portal"
+        },
+        "subject": {
+          "required": [
+            "programId",
+            "applicationId",
+            "uidGrantId"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "applicationStatus",
+            "locale",
+            "uidPolicy"
+          ],
+          "properties": {
+            "applicationStatus": {
+              "const": "submitted"
+            },
+            "locale": {
+              "enum": [
+                "en",
+                "ja",
+                "ko"
+              ]
+            },
+            "uidPolicy": {
+              "const": "required_before_gem"
+            }
+          }
+        }
+      }
+    },
+    "uidGuideEmailRequested": {
+      "properties": {
+        "source": {
+          "const": "portal"
+        },
+        "subject": {
+          "required": [
+            "programId",
+            "applicationId",
+            "uidGrantId"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deliveryReason",
+            "locale"
+          ],
+          "properties": {
+            "deliveryReason": {
+              "enum": [
+                "initial",
+                "resend"
+              ]
+            },
+            "locale": {
+              "enum": [
+                "en",
+                "ja",
+                "ko"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "uidSubmitted": {
+      "properties": {
+        "source": {
+          "const": "portal"
+        },
+        "subject": {
+          "required": [
+            "programId",
+            "applicationId",
+            "uidGrantId",
+            "uidSubmissionId"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maskedUid",
+            "uidLookupHmac",
+            "validationStatus"
+          ],
+          "properties": {
+            "maskedUid": {
+              "type": "string",
+              "pattern": "^\\*{3,16}[A-Za-z0-9_-]{2,4}$"
+            },
+            "uidLookupHmac": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "validationStatus": {
+              "enum": [
+                "submitted",
+                "validating",
+                "verified",
+                "rejected",
+                "human_required"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "videoSubmitted": {
+      "properties": {
+        "source": {
+          "const": "portal"
+        },
+        "subject": {
+          "required": [
+            "programId",
+            "applicationId",
+            "videoSubmissionId",
+            "youtubeVideoId"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "canonicalVideoUrl",
+            "youtubeVideoId",
+            "reportedViews",
+            "contentType",
+            "publishedAt",
+            "uidPolicy"
+          ],
+          "properties": {
+            "canonicalVideoUrl": {
+              "type": "string",
+              "pattern": "^https://www\\.youtube\\.com/watch\\?v=[A-Za-z0-9_-]{6,20}$",
+              "$comment": "Exact canonical form only. JSON Schema constrains the URL syntax; receiver runtime must additionally require the extracted v value to equal payload.youtubeVideoId and subject.youtubeVideoId."
+            },
+            "youtubeVideoId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{6,20}$"
+            },
+            "reportedViews": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "contentType": {
+              "enum": [
+                "short",
+                "long_form",
+                "live"
+              ]
+            },
+            "publishedAt": {
+              "$ref": "#/$defs/rfc3339DateTime"
+            },
+            "title": {
+              "$ref": "#/$defs/freeTextPrivacy",
+              "minLength": 1,
+              "maxLength": 200,
+              "$comment": "The only free-text wire field in v2. Future description or publicReason fields must reuse #/$defs/freeTextPrivacy before schema adoption."
+            },
+            "gameId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+              "$comment": "Program title registry id (xp-hero, snake-clash, ...). Optional: an absent value is read by the receiver as the program default title. Structured identifier, never free text."
+            },
+            "uidPolicy": {
+              "const": "required_before_gem"
+            }
+          }
+        }
+      }
+    },
+    "videoReviewStatusChanged": {
+      "properties": {
+        "source": {
+          "const": "flu"
+        },
+        "subject": {
+          "required": [
+            "programId",
+            "applicationId",
+            "videoSubmissionId",
+            "youtubeVideoId",
+            "reviewId"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reviewStatus"
+          ],
+          "properties": {
+            "reviewStatus": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "changes_requested"
+              ]
+            },
+            "reasonCode": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      }
+    },
+    "videoViewSnapshotUpdated": {
+      "properties": {
+        "source": {
+          "const": "flu"
+        },
+        "subject": {
+          "required": [
+            "programId",
+            "applicationId",
+            "videoSubmissionId",
+            "youtubeVideoId",
+            "trackingId"
+          ]
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "viewCount",
+            "collectedAt",
+            "reviewStatus"
+          ],
+          "properties": {
+            "viewCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "collectedAt": {
+              "$ref": "#/$defs/rfc3339DateTime"
+            },
+            "reviewStatus": {
+              "const": "approved"
+            }
+          }
+        }
+      }
+    },
+    "creatorChannelVerified": {
+      "properties": {
+        "source": {
+          "const": "portal"
+        },
+        "subject": {
+          "additionalProperties": false,
+          "required": [
+            "programId",
+            "applicationId",
+            "portalCreatorId"
+          ],
+          "properties": {
+            "programId": {
+              "$ref": "#/$defs/id"
+            },
+            "applicationId": {
+              "$ref": "#/$defs/id"
+            },
+            "portalCreatorId": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "$comment": "Exactly three subject identifiers. `channelId` is deliberately excluded: the verified channel has exactly one authoritative home, `payload.verifiedChannelId`."
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "verifiedChannelId",
+            "verifiedAt",
+            "oauthConnectedAt",
+            "audienceFetchedAt",
+            "policyVersion"
+          ],
+          "properties": {
+            "verifiedChannelId": {
+              "type": "string",
+              "pattern": "^UC[A-Za-z0-9_-]{22}$"
+            },
+            "verifiedAt": {
+              "$ref": "#/$defs/rfc3339DateTime"
+            },
+            "oauthConnectedAt": {
+              "$ref": "#/$defs/rfc3339DateTime"
+            },
+            "audienceFetchedAt": {
+              "$ref": "#/$defs/rfc3339DateTime"
+            },
+            "policyVersion": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "$comment": "Identifier and timestamp fields only. `verifiedAt` is the later of `oauthConnectedAt` and `audienceFetchedAt` so a live emission and a later backfill of the same unchanged account produce identical identity material; no email, handle, display name, or settlement code is ever carried."
+        }
+      }
+    }
+  }
+}

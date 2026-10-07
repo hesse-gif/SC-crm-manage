@@ -1,0 +1,12 @@
+{
+  "caseId": "outbound.submitted-missing-video-field",
+  "surface": "portal_outbound_review_event",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.upsert.json",
+  "mutation": {
+    "path": "/payload/canonicalVideoUrl",
+    "delete": true
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "record_invalid",
+  "notes": "Submitted revisions require the complete normalized video identity and evidence tuple; omitted video fields fail before network delivery."
+}

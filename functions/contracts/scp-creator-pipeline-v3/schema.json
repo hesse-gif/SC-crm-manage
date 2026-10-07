@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator.supercent.io/contracts/scp-creator-pipeline-v3/schema.json",
+  "title": "SCP Creator Pipeline v3 application events",
+  "description": "Privacy-minimized Portal/Flu application intake and management events. Raw application answers are available only from the separately signed material endpoint.",
+  "oneOf": [
+    { "$ref": "#/$defs/applicationIntakeRecorded" },
+    { "$ref": "#/$defs/applicationManagementAcknowledged" }
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "policyVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$"
+    },
+    "eventId": {
+      "type": "string",
+      "pattern": "^evt_[a-f0-9]{32}$"
+    },
+    "traceId": {
+      "type": "string",
+      "pattern": "^tr_[A-Za-z0-9._:-]{8,120}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rfc3339DateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "positiveRevision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "baseEnvelope": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "eventName",
+        "occurredAt",
+        "source",
+        "traceId",
+        "revision",
+        "subject",
+        "payload"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "scp.creator-pipeline.v3" },
+        "eventId": { "$ref": "#/$defs/eventId" },
+        "occurredAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "traceId": { "$ref": "#/$defs/traceId" },
+        "revision": { "$ref": "#/$defs/positiveRevision" }
+      }
+    },
+    "applicationSubject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applicationId", "portalCreatorId", "programId"],
+      "properties": {
+        "applicationId": { "$ref": "#/$defs/identifier" },
+        "portalCreatorId": { "$ref": "#/$defs/identifier" },
+        "channelId": { "$ref": "#/$defs/identifier" },
+        "programId": { "$ref": "#/$defs/identifier" },
+        "campaignId": { "$ref": "#/$defs/identifier" },
+        "outreachId": { "$ref": "#/$defs/identifier" },
+        "traceId": { "$ref": "#/$defs/traceId" },
+        "materialRequestId": { "$ref": "#/$defs/identifier" },
+        "managementAckId": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "materialLocator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["endpointPath", "requestBodyKeys"],
+      "properties": {
+        "endpointPath": {
+          "const": "/api/internal/flu/scp-creator-pipeline-v3/application-material"
+        },
+        "requestBodyKeys": {
+          "const": [
+            "applicationId",
+            "applicationRevision",
+            "callerId",
+            "eventId",
+            "expiresAt",
+            "materialHash"
+          ]
+        }
+      }
+    },
+    "signedAttributionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verification",
+        "programId",
+        "campaignId",
+        "outreachId",
+        "traceId",
+        "keyId",
+        "signedExpiresAt",
+        "verifiedAt",
+        "tokenFingerprintSha256",
+        "signatureFingerprintSha256",
+        "signatureAlgorithm",
+        "candidateResolution",
+        "candidateCount",
+        "revocationStatus",
+        "revocationEvidenceRef"
+      ],
+      "properties": {
+        "verification": { "const": "verified_outreach_token_v2" },
+        "programId": { "$ref": "#/$defs/identifier" },
+        "campaignId": { "$ref": "#/$defs/identifier" },
+        "outreachId": { "$ref": "#/$defs/identifier" },
+        "traceId": { "$ref": "#/$defs/traceId" },
+        "keyId": { "$ref": "#/$defs/identifier" },
+        "signedExpiresAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "verifiedAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "tokenFingerprintSha256": { "$ref": "#/$defs/sha256" },
+        "signatureFingerprintSha256": { "$ref": "#/$defs/sha256" },
+        "signatureAlgorithm": { "const": "hmac-sha256" },
+        "candidateResolution": { "const": "signed_expected_email_hmac_exact" },
+        "candidateCount": { "const": 1 },
+        "revocationStatus": { "const": "checked_not_revoked" },
+        "revocationEvidenceRef": {
+          "type": "string",
+          "pattern": "^portal-outreach-revocations:[A-Za-z0-9][A-Za-z0-9._:-]{2,63}:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "managedEnrollment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "sourceEventId",
+        "revision",
+        "status",
+        "applicationId",
+        "portalCreatorId",
+        "fluCreatorId",
+        "partnerId",
+        "programId",
+        "campaignId",
+        "enrollmentId",
+        "acknowledgedAt"
+      ],
+      "properties": {
+        "source": { "const": "flu_signed" },
+        "sourceEventId": { "$ref": "#/$defs/identifier" },
+        "revision": { "$ref": "#/$defs/positiveRevision" },
+        "status": { "enum": ["active", "closed", "revoked"] },
+        "applicationId": { "$ref": "#/$defs/identifier" },
+        "portalCreatorId": { "$ref": "#/$defs/identifier" },
+        "fluCreatorId": { "$ref": "#/$defs/identifier" },
+        "partnerId": { "$ref": "#/$defs/identifier" },
+        "programId": { "$ref": "#/$defs/identifier" },
+        "campaignId": { "$ref": "#/$defs/identifier" },
+        "outreachId": { "$ref": "#/$defs/identifier" },
+        "enrollmentId": { "$ref": "#/$defs/identifier" },
+        "settlementCreatorCode": { "$ref": "#/$defs/identifier" },
+        "channelId": { "$ref": "#/$defs/identifier" },
+        "acknowledgedAt": { "$ref": "#/$defs/rfc3339DateTime" }
+      }
+    },
+    "applicationIntakeRecorded": {
+      "allOf": [
+        { "$ref": "#/$defs/baseEnvelope" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": { "const": "scp.creator-pipeline.v3" },
+            "eventId": { "$ref": "#/$defs/eventId" },
+            "eventName": { "const": "application.intake.recorded" },
+            "occurredAt": { "$ref": "#/$defs/rfc3339DateTime" },
+            "source": { "const": "portal" },
+            "traceId": { "$ref": "#/$defs/traceId" },
+            "revision": { "$ref": "#/$defs/positiveRevision" },
+            "subject": { "$ref": "#/$defs/applicationSubject" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "applicationRevision",
+                "applicationStatus",
+                "attributionStatus",
+                "materialHash",
+                "materialLocator"
+              ],
+              "properties": {
+                "applicationRevision": { "$ref": "#/$defs/positiveRevision" },
+                "applicationStatus": {
+                  "enum": ["attributed", "unclassified", "ambiguous", "conflict"]
+                },
+                "attributionStatus": {
+                  "enum": ["attributed", "unclassified", "ambiguous", "conflict"]
+                },
+                "signedAttributionEvidence": { "$ref": "#/$defs/signedAttributionEvidence" },
+                "materialHash": { "$ref": "#/$defs/sha256" },
+                "materialLocator": { "$ref": "#/$defs/materialLocator" }
+              },
+              "allOf": [
+                {
+                  "if": { "properties": { "attributionStatus": { "const": "attributed" } } },
+                  "then": { "required": ["signedAttributionEvidence"] },
+                  "else": { "not": { "required": ["signedAttributionEvidence"] } }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "applicationManagementAcknowledged": {
+      "allOf": [
+        { "$ref": "#/$defs/baseEnvelope" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": { "const": "scp.creator-pipeline.v3" },
+            "eventId": { "$ref": "#/$defs/eventId" },
+            "eventName": { "const": "application.management.acknowledged" },
+            "occurredAt": { "$ref": "#/$defs/rfc3339DateTime" },
+            "source": { "const": "flu" },
+            "traceId": { "$ref": "#/$defs/traceId" },
+            "revision": { "$ref": "#/$defs/positiveRevision" },
+            "subject": { "$ref": "#/$defs/applicationSubject" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "applicationRevision",
+                "materialEventId",
+                "materialHash",
+                "managedEnrollment",
+                "materializationStatus",
+                "assignmentMode",
+                "policyVersion",
+                "receiptId"
+              ],
+              "properties": {
+                "applicationRevision": { "$ref": "#/$defs/positiveRevision" },
+                "materialEventId": { "$ref": "#/$defs/eventId" },
+                "materialHash": { "$ref": "#/$defs/sha256" },
+                "managedEnrollment": { "$ref": "#/$defs/managedEnrollment" },
+                "materializationStatus": {
+                  "enum": ["materialized", "materialization_pending", "materialization_conflict"]
+                },
+                "assignmentMode": {
+                  "enum": ["signed_attribution", "operator_assigned"]
+                },
+                "policyVersion": { "$ref": "#/$defs/policyVersion" },
+                "receiptId": { "$ref": "#/$defs/identifier" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

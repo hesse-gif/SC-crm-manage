@@ -1,0 +1,12 @@
+{
+  "caseId": "outbound.raw-email",
+  "surface": "portal_outbound_review_event",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.upsert.json",
+  "mutation": {
+    "path": "/subject/creatorEmail",
+    "value": "creator@example.com"
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "record_invalid",
+  "notes": "No raw creator email, UID, OAuth token, title, description, or reportedViews may cross this event boundary."
+}

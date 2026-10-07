@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "scp.creator-pipeline.v3",
+  "scope": "application-intake-and-management",
+  "schemaPath": "contracts/scp-creator-pipeline-v3/schema.json",
+  "schemaSha256": "e9b0c96e5d857cbe13e8fc227b7abb74b96e99d6d7b7c6366e7686c02b7efd87",
+  "typesPath": "contracts/scp-creator-pipeline-v3/types.ts",
+  "typesSha256": "6ede0d112d65dccf019e80ec121cbbb03c815f820d9d0cb31366275588c78672",
+  "readmePath": "contracts/scp-creator-pipeline-v3/README.md",
+  "readmeSha256": "138a755624c48e3c616226cb2eaef30ace258cd724ccca8a31ece9165e4342b1",
+  "fixtureDirectory": "contracts/scp-creator-pipeline-v3/fixtures",
+  "fixtureAggregateAlgorithm": "sha256(sorted fixture filename + NUL + exact fixture file bytes + LF)",
+  "fixtureAggregateSha256": "ca230ac49ed733c1e1c6a662a299fd6d61832857461c79583c1aa8b92383eae5",
+  "negativeFixtureDirectory": "contracts/scp-creator-pipeline-v3/negative-fixtures",
+  "negativeFixtureAggregateAlgorithm": "sha256(sorted negative fixture filename + NUL + exact negative fixture file bytes + LF)",
+  "negativeFixtureAggregateSha256": "ae902eeeb1c5f55816e08679586702fe957d272f05d78ebdb891764b7185e65c",
+  "eventNames": [
+    "application.intake.recorded",
+    "application.management.acknowledged"
+  ],
+  "fixtures": [
+    {
+      "eventName": "application.intake.recorded",
+      "eventId": "evt_a82e373c9c6e41c6e080cf80d8db239d",
+      "path": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "sha256": "004e1ecb9730472eb1aad0dc4d5f49af81c7fca72b5c0f96b710626865531a92"
+    },
+    {
+      "eventName": "application.management.acknowledged",
+      "eventId": "evt_93bbc8377c8d41db04fa6a63c42ad7a6",
+      "path": "contracts/scp-creator-pipeline-v3/fixtures/application.management.acknowledged.json",
+      "sha256": "8d1b1e10b95440f81da0eec3357f0c6cb5da55c60a96dadbf03b20936cce8ee8"
+    }
+  ],
+  "negativeFixtures": [
+    {
+      "path": "contracts/scp-creator-pipeline-v3/negative-fixtures/application-v3-negative-cases.json",
+      "sha256": "78aefbc2e6f0581404808ade1c7cf99c8c475d9e37523c08e1159c4e927f0738",
+      "caseIds": [
+        "NEG-APPV3-001-raw-email-uid-oauth-bearer",
+        "NEG-APPV3-002-same-id-different-payload",
+        "NEG-APPV3-003-non-canonical-bytes",
+        "NEG-APPV3-004-invalid-deterministic-event-id",
+        "NEG-APPV3-005-missing-required-key",
+        "NEG-APPV3-006-extra-key",
+        "NEG-APPV3-007-invalid-rfc3339-clock",
+        "NEG-APPV3-008-ambiguous-with-signed-attribution",
+        "NEG-APPV3-009-signed-evidence-missing-revocation-reference",
+        "NEG-APPV3-010-management-wrong-material-app-revision-trace-binding-assignment",
+        "NEG-APPV3-011-inactive-enrollment-false-grant"
+      ],
+      "surfaces": [
+        "canonical-bytes",
+        "deterministic-event-id",
+        "event-validator",
+        "management-state-helper"
+      ],
+      "expectedFailureCodes": [
+        "creator_pipeline_v3_request_invalid",
+        "creator_pipeline_v3_state_conflict",
+        "grant_not_issued",
+        "non_canonical_bytes"
+      ]
+    }
+  ]
+}

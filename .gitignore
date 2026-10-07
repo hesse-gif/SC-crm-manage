@@ -1,0 +1,17 @@
+node_modules/
+.next*/
+out/
+functions/lib/
+*.tsbuildinfo
+.env*
+!.env.example
+playwright-report/
+test-results/
+*-debug.log
+*.log
+.omx/
+.omc/
+.DS_Store
+artifacts/
+
+.firebase/

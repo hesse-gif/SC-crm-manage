@@ -1,0 +1,19 @@
+{
+  "caseId": "review.wrong-policy",
+  "surface": "scp_automation_review_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.approved.json",
+  "mutations": [
+    {
+      "path": "/subject/policyVersion",
+      "value": "scp-review-2026-07-other"
+    },
+    {
+      "path": "/payload/policyVersion",
+      "value": "scp-review-2026-07-other"
+    }
+  ],
+  "recomputeEventId": true,
+  "expectedFailureStage": "authoritative_runtime_join",
+  "expectedErrorCode": "policy_version_mismatch",
+  "notes": "Policy version drift is a receiver conflict, not a fuzzy reassignment."
+}

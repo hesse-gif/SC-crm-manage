@@ -1,0 +1,12 @@
+{
+  "caseId": "outbound.withdrawal-contains-video-field",
+  "surface": "portal_outbound_review_event",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.withdrawn.json",
+  "mutation": {
+    "path": "/payload/canonicalVideoUrl",
+    "value": "https://www.youtube.com/watch?v=QjMHnkJ5DvY"
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "record_invalid",
+  "notes": "Withdrawal events carry lineage and invalidation intent only; mutable video fields are forbidden."
+}

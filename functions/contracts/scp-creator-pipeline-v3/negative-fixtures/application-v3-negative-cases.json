@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "scp.creator-pipeline.v3.negative-fixture.v1",
+  "aggregateAlgorithm": "sha256(sorted negative fixture filename + NUL + exact negative fixture file bytes + LF)",
+  "cases": [
+    {
+      "caseId": "NEG-APPV3-001-raw-email-uid-oauth-bearer",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Integration events must reject raw contact, UID-like, OAuth, and bearer-style fields.",
+      "mutations": [
+        { "op": "set", "path": "/payload/creatorEmail", "value": "creator@example.invalid" },
+        { "op": "set", "path": "/payload/uidValue", "value": "1234567890" },
+        { "op": "set", "path": "/payload/oauthToken", "value": "ya29.contract-negative-token" },
+        { "op": "set", "path": "/payload/bearerGrant", "value": "Bearer contract-negative-token" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-002-same-id-different-payload",
+      "surface": "deterministic-event-id",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Same eventId with different canonical identity bytes is a replay conflict candidate and must be rejected before delivery.",
+      "mutations": [
+        { "op": "set", "path": "/payload/materialHash", "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-003-non-canonical-bytes",
+      "surface": "canonical-bytes",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "non_canonical_bytes",
+      "description": "Pretty-printed or reordered JSON bytes are not fixture-equivalent to Portal canonical JSON.",
+      "rawText": "{\n  \"schemaVersion\": \"scp.creator-pipeline.v3\",\n  \"eventName\": \"application.intake.recorded\"\n}\n"
+    },
+    {
+      "caseId": "NEG-APPV3-004-invalid-deterministic-event-id",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "eventId must be derived from canonical identity bytes, not supplied by a caller.",
+      "mutations": [
+        { "op": "set", "path": "/eventId", "value": "evt_00000000000000000000000000000000" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-005-missing-required-key",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Missing required payload keys must fail closed.",
+      "mutations": [
+        { "op": "remove", "path": "/payload/materialHash" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-006-extra-key",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Unknown envelope, subject, payload, or evidence keys must fail closed.",
+      "mutations": [
+        { "op": "set", "path": "/subject/email", "value": "creator@example.invalid" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-007-invalid-rfc3339-clock",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Invalid RFC3339 dates and impossible verification clocks must fail closed.",
+      "mutations": [
+        { "op": "set", "path": "/payload/signedAttributionEvidence/verifiedAt", "value": "2026-07-20T00:00:00.000Z" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-008-ambiguous-with-signed-attribution",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Ambiguous, unclassified, or conflict intake events must not carry signed-attribution evidence.",
+      "mutations": [
+        { "op": "set", "path": "/payload/attributionStatus", "value": "ambiguous" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-009-signed-evidence-missing-revocation-reference",
+      "surface": "event-validator",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.intake.recorded.json",
+      "expectedFailureCode": "creator_pipeline_v3_request_invalid",
+      "description": "Signed outreach evidence is incomplete without a checked-not-revoked reference bound to the token fingerprint.",
+      "mutations": [
+        { "op": "remove", "path": "/payload/signedAttributionEvidence/revocationEvidenceRef" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-010-management-wrong-material-app-revision-trace-binding-assignment",
+      "surface": "management-state-helper",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.management.acknowledged.json",
+      "expectedFailureCode": "creator_pipeline_v3_state_conflict",
+      "description": "Flu management acknowledgement must match material event, application revision, trace, creator/application binding, and assignment mode exactly.",
+      "stateAssertions": [
+        "payload.applicationRevision must equal Portal application.revision",
+        "payload.materialEventId must reference a delivered application.intake.recorded outbox record",
+        "payload.materialHash must equal the private material snapshot hash",
+        "traceId and subject.traceId must equal the Portal application traceId",
+        "subject portalCreatorId/programId/campaignId/outreachId must match managedEnrollment",
+        "assignmentMode=signed_attribution requires exact verified outreach identity; operator_assigned is required otherwise"
+      ],
+      "mutations": [
+        { "op": "set", "path": "/payload/applicationRevision", "value": 2 },
+        { "op": "set", "path": "/payload/materialEventId", "value": "evt_11111111111111111111111111111111" },
+        { "op": "set", "path": "/traceId", "value": "tr_contract_pipeline_wrong" },
+        { "op": "set", "path": "/subject/portalCreatorId", "value": "pc_contract_wrong" },
+        { "op": "set", "path": "/payload/assignmentMode", "value": "signed_attribution" }
+      ]
+    },
+    {
+      "caseId": "NEG-APPV3-011-inactive-enrollment-false-grant",
+      "surface": "management-state-helper",
+      "baseFixture": "contracts/scp-creator-pipeline-v3/fixtures/application.management.acknowledged.json",
+      "expectedFailureCode": "grant_not_issued",
+      "description": "Closed or revoked managed enrollments may revoke active grants but must never issue a new onboarding/content grant.",
+      "stateAssertions": [
+        "managedEnrollment.status=closed keeps application/submission history",
+        "managedEnrollment.status=closed revokes issued/consumed grants",
+        "managedEnrollment.status=closed does not create a replacement grant",
+        "onboarding material requires an existing active management receipt grantId"
+      ],
+      "mutations": [
+        { "op": "set", "path": "/payload/managedEnrollment/status", "value": "closed" },
+        { "op": "set", "path": "/payload/materializationStatus", "value": "materialized" }
+      ]
+    }
+  ]
+}

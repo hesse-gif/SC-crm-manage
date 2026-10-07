@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "scp.video-submission-review.v3",
+  "scope": "video-revision-scp-review-and-downstream-projection",
+  "schemaPath": "contracts/scp-video-submission-review-v3/schema.json",
+  "schemaSha256": "651b18113713d79d362a649bbc175664e75198ad96a0b0cb5b3c773ddb0ecf03",
+  "typesPath": "contracts/scp-video-submission-review-v3/types.ts",
+  "typesSha256": "acb5a763fd4342e7dbfbf75c62d9122d12e6e26d2c5fc403d54b405cd6d2f9cc",
+  "readmePath": "contracts/scp-video-submission-review-v3/README.md",
+  "readmeSha256": "ab7bd7099804a7ba23471ba2630be0cfcc22a7887ed0d0cea88ce1d1a8ad1054",
+  "fixtureDirectory": "contracts/scp-video-submission-review-v3/fixtures",
+  "fixtureAggregateAlgorithm": "sha256(sorted fixture filename + NUL + exact fixture file bytes + LF)",
+  "fixtureAggregateSha256": "927b2c3c0e6065c259bbbb8497ef8ce07b5af1774856353a8505848744de9709",
+  "negativeFixtureDirectory": "contracts/scp-video-submission-review-v3/negative-fixtures",
+  "negativeFixtureAggregateSha256": "3f6199f983007dcb235034fee97c67460d8e2d64008f5235c5a87ac142ce64b0",
+  "eventNames": [
+    "video.downstream.status_observed",
+    "video.revision.submitted",
+    "video.revision.withdrawn",
+    "video.review.status_observed"
+  ],
+  "fixtures": [
+    {
+      "eventName": "video.downstream.status_observed",
+      "eventId": "evt_d497e513c5c4165f55f6f6d085a17906",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/flu.video.downstream.status_observed.eligible.json",
+      "sha256": "9eb54fffafaad0070a83cb21e07099b7215128d76deb6db94892de01c2ba28c5"
+    },
+    {
+      "eventName": "video.revision.submitted",
+      "eventId": "evt_a602c63d634217416182b30121d386c5",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.replace-invalidates-approved.json",
+      "sha256": "517809c720e438a1ed03d33a5405dab677b325b6559fec47e50dc5366d03e5f6"
+    },
+    {
+      "eventName": "video.revision.submitted",
+      "eventId": "evt_1ee2f22fb648531253123c987af354be",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.upsert.json",
+      "sha256": "6fa15ff22661671001ed0b9fd6f999b46c8fc46d1652201b376e5a5eb414abd8"
+    },
+    {
+      "eventName": "video.revision.withdrawn",
+      "eventId": "evt_a97e76a9c6ce31e10703d82a3b4632fe",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.withdrawn.json",
+      "sha256": "30846e99c12747b9bd57836c1633a04fa694db27a9bf8411271e40def432e384"
+    },
+    {
+      "eventName": "video.review.status_observed",
+      "eventId": "evt_df84990e9bd5392331c355a2a3d90303",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.approved.json",
+      "sha256": "c334cd5ea5ad89ec45abde5c54a0e4f21fcc9c0ea53e09b8b11f6e16cf6112a1"
+    },
+    {
+      "eventName": "video.review.status_observed",
+      "eventId": "evt_db4237fa5d7b1100265a1665b0f09e7b",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.changes_requested.json",
+      "sha256": "0c5cfd042128002536507d845aebeb60a75ff0aedd9d3accc8df7d8ed7c683d7"
+    },
+    {
+      "eventName": "video.review.status_observed",
+      "eventId": "evt_f3c4cca0a1438433f29191f75b4eb545",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.human_review_required.json",
+      "sha256": "7c042fc5e1b371bbc1b1f92045af200a340a4f1cbdd451911bfde3ced4bf297a"
+    },
+    {
+      "eventName": "video.review.status_observed",
+      "eventId": "evt_1b5792e4d29c0a72087ad0c03d59a546",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.in_review.json",
+      "sha256": "5c184b0394d3b11a14b2ecc2b861ecef97910d29db78bb31146f9a4b7e582344"
+    },
+    {
+      "eventName": "video.review.status_observed",
+      "eventId": "evt_bba6738fd88564fb709b5129a049cdc8",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.queued.json",
+      "sha256": "0dfe187c963eb0810fee9ef54d316bc925ff79c8b2dc01f10eb8f0a29a1aae77"
+    },
+    {
+      "eventName": "video.review.status_observed",
+      "eventId": "evt_b9e1d232b74548f114ca905a7aab51c0",
+      "path": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.rejected.json",
+      "sha256": "3f4b2521db6ce8e033339eaf3812064428e5808dcc3622c83767b2d54ed88908"
+    }
+  ],
+  "negativeFixtures": [
+    {
+      "caseId": "downstream.false-projection",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/downstream.false-projection.json",
+      "sha256": "588c3368f5f98155cebcf1431f58517e4db2f28c14dedfd9fcf823ce70a9adf1"
+    },
+    {
+      "caseId": "downstream.review-not-approved",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/downstream.review-not-approved.json",
+      "sha256": "d0111ff6e0c023f23ba7d76b82ba5eb65dc4f8f4248c0ef07ab279d9af271aa3"
+    },
+    {
+      "caseId": "outbound.pii-reported-views",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/outbound.pii-reported-views.json",
+      "sha256": "e8400f198a1d0a6189f83e4921c33374fddaab665cf72f6b680c434e93eddd58"
+    },
+    {
+      "caseId": "outbound.raw-email",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/outbound.raw-email.json",
+      "sha256": "62d1b5b8bfef9f7d4fb4f86783fbe6a5f983249c7af19df48c0d1dc328e5a1fb"
+    },
+    {
+      "caseId": "outbound.raw-uid-numeric-identifier",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/outbound.raw-uid-numeric-identifier.json",
+      "sha256": "0c065ec7315f59a1d2e30c392b2be8e3502b8b68a0e2ae9e247a386a32e3ed0d"
+    },
+    {
+      "caseId": "outbound.same-id-different-payload",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/outbound.same-id-different-payload.json",
+      "sha256": "a8cd529000c44115c50771f614b7c42e3d0ff237bd4f8dc9fc8805a3509b8297"
+    },
+    {
+      "caseId": "outbound.submitted-missing-video-field",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/outbound.submitted-missing-video-field.json",
+      "sha256": "e8aad8eea67c1877fcd73ca1abaf3a0bc852865a6e1b2a0298de04ebff365026"
+    },
+    {
+      "caseId": "outbound.withdrawal-contains-video-field",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/outbound.withdrawal-contains-video-field.json",
+      "sha256": "82a9da9fe49f566501b09f06812ba788f0b6b83ac4d33f5b9222957524c04a05"
+    },
+    {
+      "caseId": "review.invalid-reason-for-approved",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/review.invalid-reason-for-approved.json",
+      "sha256": "5c892bfe24caad12de86a8d23bd8d3fa6b96dcff3817f121975b463c736c19a6"
+    },
+    {
+      "caseId": "review.missing-reason-for-changes-requested",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/review.missing-reason-for-changes-requested.json",
+      "sha256": "03613e2acfc620ddae5fe08b50ed906545967ccb229f564f20934ac67237cd76"
+    },
+    {
+      "caseId": "review.wrong-current-revision",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/review.wrong-current-revision.json",
+      "sha256": "19f490ff9d35a5d5d7364150f96c8f2da54f713f9a7a2f36116c0c7a0a4146bf"
+    },
+    {
+      "caseId": "review.wrong-fingerprint",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/review.wrong-fingerprint.json",
+      "sha256": "325a5f54a9b531a0b3847ca13c3ebad3ebeb6a2aaabaef7ea2cba93804e5ec78"
+    },
+    {
+      "caseId": "review.wrong-policy",
+      "path": "contracts/scp-video-submission-review-v3/negative-fixtures/review.wrong-policy.json",
+      "sha256": "f7fb26ec98f0ff377c8aeb5904efd746e2c9b203ad307c12ef65898d0a88c7ec"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "caseId": "review.wrong-current-revision",
+  "surface": "scp_automation_review_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.approved.json",
+  "mutation": {
+    "path": "/subject/videoRevision",
+    "value": 1
+  },
+  "recomputeEventId": true,
+  "expectedFailureStage": "authoritative_runtime_join",
+  "expectedErrorCode": "current_revision_mismatch",
+  "notes": "The JSON shape can be valid, but Portal accepts review callbacks only for the current canonical revision and matching delivered outbox."
+}

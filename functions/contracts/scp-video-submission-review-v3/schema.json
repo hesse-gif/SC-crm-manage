@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://supercent.example/contracts/scp-video-submission-review-v3/schema.json",
+  "title": "SCP video submission review v3 wire contracts",
+  "oneOf": [
+    { "$ref": "#/$defs/portalVideoRevisionEvent" },
+    { "$ref": "#/$defs/scpAutomationReviewCallbackEvent" },
+    { "$ref": "#/$defs/fluDownstreamProjectionCallbackEvent" },
+    { "$ref": "#/$defs/scpAutomationReceipt" }
+  ],
+  "$defs": {
+    "eventId": { "type": "string", "pattern": "^evt_[a-f0-9]{32}$" },
+    "traceId": { "type": "string", "pattern": "^tr_[A-Za-z0-9._:-]{8,160}$" },
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{3,160}$" },
+    "policyVersion": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$" },
+    "reasonCode": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_:-]{2,80}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "rfc3339": { "type": "string", "format": "date-time" },
+    "youtubeUrl": {
+      "type": "string",
+      "pattern": "^https://((www\\.)?youtube\\.com|youtu\\.be)/"
+    },
+    "youtubeVideoId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{6,32}$" },
+    "videoSubject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applicationId",
+        "campaignId",
+        "contentFingerprint",
+        "enrollmentId",
+        "fluCreatorId",
+        "partnerId",
+        "policyVersion",
+        "portalCreatorId",
+        "programId",
+        "videoRevision",
+        "videoSubmissionId"
+      ],
+      "properties": {
+        "videoSubmissionId": { "$ref": "#/$defs/identifier" },
+        "videoRevision": { "type": "integer", "minimum": 1 },
+        "applicationId": { "$ref": "#/$defs/identifier" },
+        "programId": { "$ref": "#/$defs/identifier" },
+        "portalCreatorId": { "$ref": "#/$defs/identifier" },
+        "fluCreatorId": { "$ref": "#/$defs/identifier" },
+        "partnerId": { "$ref": "#/$defs/identifier" },
+        "campaignId": { "$ref": "#/$defs/identifier" },
+        "outreachId": { "$ref": "#/$defs/identifier" },
+        "enrollmentId": { "$ref": "#/$defs/identifier" },
+        "settlementCreatorCode": { "$ref": "#/$defs/identifier" },
+        "channelId": { "$ref": "#/$defs/identifier" },
+        "contentFingerprint": { "$ref": "#/$defs/sha256" },
+        "policyVersion": { "$ref": "#/$defs/policyVersion" }
+      }
+    },
+    "portalVideoRevisionEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "eventName",
+        "occurredAt",
+        "payload",
+        "revision",
+        "schemaVersion",
+        "source",
+        "subject",
+        "traceId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "scp.video-submission-review.v3" },
+        "eventId": { "$ref": "#/$defs/eventId" },
+        "eventName": { "enum": ["video.revision.submitted", "video.revision.withdrawn"] },
+        "occurredAt": { "$ref": "#/$defs/rfc3339" },
+        "source": { "const": "portal" },
+        "traceId": { "$ref": "#/$defs/traceId" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "subject": { "$ref": "#/$defs/videoSubject" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["correctionReasonCode", "operation", "payloadHash", "sourceUpdatedAt"],
+          "properties": {
+            "operation": { "enum": ["upsert", "replace", "withdraw"] },
+            "correctionReasonCode": { "$ref": "#/$defs/reasonCode" },
+            "sourceUpdatedAt": { "$ref": "#/$defs/rfc3339" },
+            "payloadHash": { "$ref": "#/$defs/sha256" },
+            "canonicalVideoUrl": { "$ref": "#/$defs/youtubeUrl" },
+            "youtubeVideoId": { "$ref": "#/$defs/youtubeVideoId" },
+            "publishedAt": { "$ref": "#/$defs/rfc3339" },
+            "contentType": { "enum": ["short", "long_form", "live"] },
+            "invalidatesApprovedRevision": { "type": "integer", "minimum": 1 }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "operation": { "const": "upsert" } },
+                "required": ["operation"]
+              },
+              "then": { "not": { "required": ["invalidatesApprovedRevision"] } }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "eventName": { "const": "video.revision.submitted" } },
+            "required": ["eventName"]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "required": ["canonicalVideoUrl", "contentType", "publishedAt", "youtubeVideoId"],
+                "properties": { "operation": { "enum": ["upsert", "replace"] } }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "payload": {
+                "properties": { "operation": { "const": "withdraw" } },
+                "not": {
+                  "anyOf": [
+                    { "required": ["canonicalVideoUrl"] },
+                    { "required": ["contentType"] },
+                    { "required": ["publishedAt"] },
+                    { "required": ["youtubeVideoId"] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "scpAutomationReviewCallbackEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "eventName",
+        "occurredAt",
+        "payload",
+        "revision",
+        "schemaVersion",
+        "source",
+        "subject",
+        "traceId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "scp.video-review-callback.v3" },
+        "eventId": { "$ref": "#/$defs/eventId" },
+        "eventName": { "const": "video.review.status_observed" },
+        "occurredAt": { "$ref": "#/$defs/rfc3339" },
+        "source": { "const": "scp_automation" },
+        "traceId": { "$ref": "#/$defs/traceId" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "subject": { "$ref": "#/$defs/videoSubject" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policyVersion", "reviewId", "reviewedAt", "status"],
+          "properties": {
+            "reviewId": { "$ref": "#/$defs/identifier" },
+            "status": {
+              "enum": ["queued", "in_review", "approved", "changes_requested", "human_review_required", "rejected"]
+            },
+            "policyVersion": { "$ref": "#/$defs/policyVersion" },
+            "reviewedAt": { "$ref": "#/$defs/rfc3339" },
+            "publicReasonCode": { "$ref": "#/$defs/reasonCode" }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": { "enum": ["changes_requested", "human_review_required", "rejected"] }
+                },
+                "required": ["status"]
+              },
+              "then": { "required": ["publicReasonCode"] },
+              "else": { "not": { "required": ["publicReasonCode"] } }
+            }
+          ]
+        }
+      }
+    },
+    "fluDownstreamProjectionCallbackEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "eventName",
+        "occurredAt",
+        "payload",
+        "revision",
+        "schemaVersion",
+        "source",
+        "subject",
+        "traceId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "scp.video-downstream-callback.v3" },
+        "eventId": { "$ref": "#/$defs/eventId" },
+        "eventName": { "const": "video.downstream.status_observed" },
+        "occurredAt": { "$ref": "#/$defs/rfc3339" },
+        "source": { "const": "flu" },
+        "traceId": { "$ref": "#/$defs/traceId" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "subject": { "$ref": "#/$defs/videoSubject" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policyVersion", "projectedAt", "projectionId", "settlementEligible", "status", "trackingEligible"],
+          "properties": {
+            "projectionId": { "$ref": "#/$defs/identifier" },
+            "status": { "const": "eligible" },
+            "policyVersion": { "$ref": "#/$defs/policyVersion" },
+            "projectedAt": { "$ref": "#/$defs/rfc3339" },
+            "trackingEligible": { "const": true },
+            "settlementEligible": { "const": true }
+          }
+        }
+      }
+    },
+    "scpAutomationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contentFingerprint",
+        "eventId",
+        "receivedAt",
+        "receiver",
+        "schemaVersion",
+        "status",
+        "videoRevision",
+        "videoSubmissionId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "scp.video-submission-review.receipt.v1" },
+        "receiver": { "const": "scp_automation" },
+        "status": { "const": "received" },
+        "eventId": { "$ref": "#/$defs/eventId" },
+        "videoSubmissionId": { "$ref": "#/$defs/identifier" },
+        "videoRevision": { "type": "integer", "minimum": 1 },
+        "contentFingerprint": { "$ref": "#/$defs/sha256" },
+        "receivedAt": { "$ref": "#/$defs/rfc3339" }
+      }
+    }
+  }
+}

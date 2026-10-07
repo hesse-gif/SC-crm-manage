@@ -1,0 +1,87 @@
+<!-- W120: 영상 검수 결과 메일 — **승인** 분기.
+     video_result_mail 은 판정 3종이 kind 하나(scp_mail_templates/video_result_mail)를 공유하지만,
+     컴파일러에 조건 분기가 없으므로 마스터는 판정별로 나눈다(코드 폴백이 mailKind 로 고른다).
+     승인 분기에만 재제출 CTA 가 없다 — 한 파일에 3판정을 우겨넣으면 승인 메일에 빈 앵커
+     (`href=""`)가 남는다(기존 F3 결함 클래스).
+     문서 골격(DOCTYPE/html/head/body)은 의도적으로 없다 — sanitizeMailHtml 허용 태그에 없어서
+     골격을 남기면 <title> 텍스트가 본문·텍스트 파트 첫 줄로 새어 나간다(기존 6종과 동일 규약).
+     링크는 {{portal_link}} 변수뿐이다(W48: 리터럴 URL 금지). -->
+
+<!-- Preheader -->
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+Your video is approved — view tracking has started.
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0b0b0b">
+<tr><td align="center" style="padding:0 12px;">
+
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%;">
+
+    <tr>
+      <td style="padding:24px 8px 8px 8px;">
+        <span style="font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:12px; font-weight:600; letter-spacing:0.08em; color:#8a8a8a; text-transform:uppercase;">{{supercent_brand}} &middot; {{program_name}}</span>
+      </td>
+    </tr>
+
+    <!-- Result -->
+    <tr>
+      <td style="padding:8px 8px 4px 8px;">
+        <h1 style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:26px; line-height:1.25; font-weight:700; letter-spacing:-0.02em; color:#ffffff;">Your video is approved.</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:8px 8px 16px 8px;">
+        <p style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:15px; line-height:1.6; color:#c9c9c9;">Review result: <strong style="color:#ffffff;">{{video_result_state}}</strong> &mdash; {{video_result_message}}.</p>
+      </td>
+    </tr>
+
+    <!-- Submission reference -->
+    <tr>
+      <td style="padding:0 8px 20px 8px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#151515; border-radius:12px;">
+          <tr><td style="padding:18px 20px;">
+            <!-- 2026-09-05 다타이틀: 게임명은 리터럴이 아니라 제출 타이틀의 레지스트리 값이다
+                 (functions/programTitles.seed.json -> videoReviewRubricTitle). 두 번째 타이틀이
+                 붙어도 이 자리는 코드 수정 없이 맞는 이름을 낸다. -->
+            <p style="margin:0 0 8px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Game</p>
+            <p style="margin:0 0 12px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#ffffff;">{{game_title}}</p>
+            <p style="margin:0 0 8px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Video</p>
+            <p style="margin:0 0 12px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#ffffff;">{{video_title}}</p>
+            <p style="margin:0 0 4px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">{{youtube_url}}</p>
+            <p style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Reference {{submission_ref}} &middot; Reviewed {{decided_date}}</p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- What happens next -->
+    <tr>
+      <td style="padding:0 8px 20px 8px;">
+        <p style="margin:0 0 10px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#e6e6e6;">&#8226;&nbsp; <strong style="color:#ffffff;">View tracking has started</strong> &mdash; we now count the views your approved video earns.</p>
+        <p style="margin:0 0 10px 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#e6e6e6;">&#8226;&nbsp; <strong style="color:#ffffff;">You are paid per view</strong> &mdash; your payout follows the CPM rate of your track.</p>
+        <p style="margin:0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:14px; line-height:1.6; color:#e6e6e6;">&#8226;&nbsp; <strong style="color:#ffffff;">Keep the video public</strong> &mdash; a private or deleted video stops counting views.</p>
+      </td>
+    </tr>
+
+    <!-- CTA -->
+    <tr>
+      <td align="center" style="padding:0 8px 24px 8px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#1aafff; border-radius:40px;">
+          <tr><td align="center">
+            <a href="{{portal_link}}" target="_blank" style="display:inline-block; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:17px; font-weight:700; letter-spacing:-0.01em; color:#ffffff; text-decoration:none; padding:15px 36px; border-radius:40px;">Open your creator portal</a>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Close -->
+    <tr>
+      <td style="padding:0 8px 28px 8px; border-top:1px solid #262626;">
+        <p style="margin:16px 0 0 0; font-family:Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size:13px; line-height:1.6; color:#8a8a8a;">Questions about this result? Reply to this email or contact <a href="mailto:scp@supercent.io" style="color:#8a8a8a;">scp@supercent.io</a></p>
+      </td>
+    </tr>
+
+  </table>
+
+</td></tr>
+</table>

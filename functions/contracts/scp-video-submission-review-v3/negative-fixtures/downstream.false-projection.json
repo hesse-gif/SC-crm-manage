@@ -1,0 +1,12 @@
+{
+  "caseId": "downstream.false-projection",
+  "surface": "flu_downstream_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/flu.video.downstream.status_observed.eligible.json",
+  "mutation": {
+    "path": "/payload/trackingEligible",
+    "value": false
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "invalid_event",
+  "notes": "Downstream callback v3 can only observe eligible current approved projections; false/partial eligibility is not a valid projection event."
+}

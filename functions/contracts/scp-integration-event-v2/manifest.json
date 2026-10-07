@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "scp.integration-event.v2",
+  "schemaPath": "contracts/scp-integration-event-v2/schema.json",
+  "schemaSha256": "21033cf3b8746926f2c1c1168a06049f647e0becb6a8440e5a6db97f0c6c3510",
+  "fixtureDirectory": "contracts/scp-integration-event-v2/fixtures",
+  "fixtureAggregateAlgorithm": "sha256(sorted fixture filename + NUL + exact fixture file bytes + LF)",
+  "fixtureAggregateSha256": "4769e937c4365c9585a3d0d4342e7e98737eea4fe3ec310d2fd632637ef87020",
+  "eventNames": [
+    "application.submitted",
+    "uid.guide-email.requested",
+    "uid.submitted",
+    "video.submitted",
+    "video.review-status.changed",
+    "video.view-snapshot.updated",
+    "creator.channel-verified"
+  ],
+  "fixtures": [
+    {
+      "eventName": "application.submitted",
+      "eventId": "evt_801022151d44c4e245cd02ece46d0a73",
+      "path": "contracts/scp-integration-event-v2/fixtures/application.submitted.json",
+      "sha256": "c2a4bbe24186defe6b1e15e7c6f7ac216e4882ffabe39871cd86e8ad116170fd"
+    },
+    {
+      "eventName": "uid.guide-email.requested",
+      "eventId": "evt_7261a123daaf137896bd4dc2dd2d3928",
+      "path": "contracts/scp-integration-event-v2/fixtures/uid.guide-email.requested.json",
+      "sha256": "9f0153d5a31ff49a5b08a2697d4dc1d7b46994a4687c0f6859cf10d4277aac97"
+    },
+    {
+      "eventName": "uid.submitted",
+      "eventId": "evt_351a90c0c4d9e605d9571b5523394f90",
+      "path": "contracts/scp-integration-event-v2/fixtures/uid.submitted.json",
+      "sha256": "a0b5ced4615ab012e8674be8d70acdff0435728714995c3c8c93b41dc7ce4066"
+    },
+    {
+      "eventName": "video.submitted",
+      "eventId": "evt_17b197874bce90acd845304d25fde367",
+      "path": "contracts/scp-integration-event-v2/fixtures/video.submitted.json",
+      "sha256": "6060c6a0684cfdeeac1eeea2c1795712b84e8dc116c171212239554ad1463bdf"
+    },
+    {
+      "eventName": "video.review-status.changed",
+      "eventId": "evt_3ce6bb5e7cabc71c19cf4f2181cd3102",
+      "path": "contracts/scp-integration-event-v2/fixtures/video.review-status.changed.json",
+      "sha256": "38f12de5ea9f9ebe2b7f4b70f2d1ded80b749421707ce2feb222d7190e347563"
+    },
+    {
+      "eventName": "video.view-snapshot.updated",
+      "eventId": "evt_7d1dfa8050ac1dd47627a4ec817866ea",
+      "path": "contracts/scp-integration-event-v2/fixtures/video.view-snapshot.updated.json",
+      "sha256": "09bae5ffb1e1d35ddf513e5940f78823c2614114beccdc8495d92a23c3b2ca50"
+    },
+    {
+      "eventName": "creator.channel-verified",
+      "eventId": "evt_e9cc18e9750cfe1ffc9073ff13aad2ab",
+      "path": "contracts/scp-integration-event-v2/fixtures/creator.channel-verified.json",
+      "sha256": "a7e240e508f89af92b273896b58aa82e9cc2e351535aab6b02430f85513adc0b"
+    }
+  ]
+}

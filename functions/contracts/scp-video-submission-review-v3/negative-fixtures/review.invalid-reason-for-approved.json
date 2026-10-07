@@ -1,0 +1,12 @@
+{
+  "caseId": "review.invalid-reason-for-approved",
+  "surface": "scp_automation_review_callback",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/scp.video.review.status_observed.approved.json",
+  "mutation": {
+    "path": "/payload/publicReasonCode",
+    "value": "should_not_exist"
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "invalid_event",
+  "notes": "queued, in_review, and approved callbacks must not carry a public reason code."
+}

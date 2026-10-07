@@ -1,0 +1,12 @@
+{
+  "caseId": "outbound.same-id-different-payload",
+  "surface": "portal_outbound_review_event",
+  "baseFixture": "contracts/scp-video-submission-review-v3/fixtures/portal.video.revision.submitted.upsert.json",
+  "mutation": {
+    "path": "/payload/youtubeVideoId",
+    "value": "B4mo2asPKjM"
+  },
+  "expectedFailureStage": "runtime_validation",
+  "expectedErrorCode": "record_invalid",
+  "notes": "Event IDs are deterministic from canonical identity material; the same eventId with changed payload is a conflict."
+}

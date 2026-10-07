@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "demo-flu"
+  },
+  "targets": {
+    "influencer-crm-296ca": {
+      "hosting": {
+        "mixmaxclone": [
+          "influencer-crm-296ca"
+        ]
+      }
+    }
+  }
+}
