@@ -2,11 +2,44 @@
   "hosting": {
     "target": "mixmaxclone",
     "public": "out",
-    "ignore": ["firebase.hosting.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.hosting.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "cleanUrls": true,
     "headers": [
-      { "source": "**", "headers": [{ "key": "Cache-Control", "value": "private, no-store" }, { "key": "X-Content-Type-Options", "value": "nosniff" }] },
-      { "source": "/_next/static/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "private, no-store"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          }
+        ]
+      },
+      {
+        "source": "/_next/static/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/mixmaxGoogleCallback",
+        "function": {
+          "functionId": "mixmaxGoogleCallback",
+          "region": "asia-northeast3"
+        }
+      }
     ]
   }
 }

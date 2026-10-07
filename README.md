@@ -1,60 +1,160 @@
-# Mixmax
+# Handle
 
-Mixmax 스타일의 영업 커뮤니케이션 워크스페이스입니다. UI는 Mixmax의 어두운 1차 내비게이션과 Live feed 중심 흐름을 따르고, 데이터는 기존 공유 Firebase Auth + Cloud Functions 파이프라인을 통해 같은 대화·권한·메일 작업을 읽습니다.
+Handle is the temporary product name for the communication workspace being built from the migrated Flu chat and mail workflow. It targets its own Firebase project, its own named Firestore database, and its own Gmail sync pipeline instead of reading the Flu runtime at request time.
 
-원본: `supercent-io/Flu`, 릴리스 `0.6.116`, 커밋 `be5915aeb455b3ce378e022125dcc09d514b8d8d`.
+Current status: the independent runtime is deployed to production with 23 Mixmax Functions, the named `mixmax` Firestore rules/indexes, and Hosting released to `https://influencer-crm-296ca.web.app/mail`. The target Gmail OAuth callback and `gmail.readonly` / `gmail.send` scopes are saved in Google Cloud, and `MIXMAX_GOOGLE_OAUTH_READY=true` is deployed. The captured Flu source inventory from 2026-10-07 06:34:28-06:34:49 UTC is covered in the target `mixmax` database with `missingAfter=0` for all 12 source collections.
 
-Live: https://influencer-crm-296ca.web.app/chat
+The automatic response pipeline is deployed and verified with unit, emulator E2E, and emulator-backed integration tests using mocked Gemini/OAuth/Gmail transport. It is an event-driven Gmail inbound classifier, not a 30-second polling loop. Live mailbox consent, Gmail push, and automatic send have not been exercised yet because the target currently has zero connected mailboxes. See [migration/automation.md](migration/automation.md) for the current contract, operator workflow, and verification boundary.
 
-## 실행
+## Runtime Boundary
 
-Node.js 22가 필요합니다.
+- Target Firebase project: `influencer-crm-296ca`
+- Target Firestore database: `mixmax`
+- Functions region: `asia-northeast3`
+- Owner bootstrap: the verified Google account configured in server parameter `MIXMAX_OWNER_EMAIL`
+- App route: `/mail`
+- Google OAuth callback: `https://influencer-crm-296ca.web.app/mixmaxGoogleCallback`
+
+Flu remains read-only for this migration. Handle imports allowed business data once, stores new state in `influencer-crm-296ca/(mixmax)`, and never writes back to Flu.
+
+The runtime deployment is scoped to the Mixmax codebase, named `mixmax` database rules/indexes, and Hosting release. The target default Firestore database and pre-existing non-Mixmax Functions are preserved.
+
+```text
+Gmail watch
+  -> Pub/Sub topic mixmax-gmail
+  -> mixmaxGmailPush
+  -> mixmax_sync_jobs/{connectionId}
+  -> mixmaxSyncJob
+  -> Gmail history delta / full fallback
+  -> mixmax_threads + mixmax_messages
+  -> browser onSnapshot listeners
+```
+
+Automatic response events extend this pipeline after a new Gmail inbound message is durable:
+
+```text
+Gmail inbound message
+  -> mixmax_threads latest inbound update
+  -> mixmaxThreadAutomationEnqueue
+  -> mixmax_automation_runs/{runId}
+  -> mixmaxAutomationJob
+  -> classify against reviewed cases
+  -> create needs-review case or send approved saved reply
+```
+
+## What Is Implemented
+
+- Google sign-in for the Handle workspace, with first-owner bootstrap gated by `MIXMAX_OWNER_EMAIL`.
+- Workspace membership checks through `mixmax_members/{uid}`.
+- Firestore client reads for workspace-scoped collections only; all writes go through callables.
+- Realtime UI subscriptions with `onSnapshot` for threads, messages, drafts, templates, contacts, cases, sequences, outbox, and connected accounts.
+- Gmail OAuth runtime for `gmail.readonly` and `gmail.send`, with credential storage only after Gmail watch succeeds.
+- Gmail push/history sync with durable cursors, leases, retry behavior, full-sync fallback on expired history, and daily watch renewal.
+- Manual AI draft creation through Gemini, with human review before send.
+- Explicit Gmail sending through a user-owned connected account, with idempotent request IDs and an ambiguous-send state that requires human confirmation.
+- Event-driven automatic response pipeline for future inbound Gmail messages after explicit account and case approval.
+- One-time Flu data import into Handle collections, with secret redaction and deterministic `flu_` IDs.
+- Full-body message reconciliation for imported `message_sources`, with backups before legacy short-ID duplicate removal.
+- Casebook import for 21 Flu chat casebook cases.
+- Final nested association audit checked 51,207 source conversation-message links, repaired six missing target associations, and reports `missingAfter=0` for the repaired set.
+- Explicit sender assignment for imported Flu threads that lack mailbox metadata. Assignment only binds an operator-owned connected account and does not send mail.
+- Sequence records as draft plans only. There is no automatic sequence sender.
+
+## Automatic Response Pipeline
+
+The automation runtime includes:
+
+- Account-level pause/enable through `mixmaxSetAutomationSettings`.
+- Historical or imported conversation analysis through `mixmaxAnalyzeThread`; this is review-only and never auto-sends historical mail.
+- Case-level "앞으로 자동응대" approval through `mixmaxConfigureCaseAutomation`, tied to one connected account and the current saved reply/policy digest.
+- Event-driven enqueue on new Gmail inbound thread updates through `mixmaxThreadAutomationEnqueue`.
+- Automatic run processing through `mixmaxAutomationJob`.
+- Operator confirmation for uncertain provider outcomes through `mixmaxResolveAutomationRun`.
+
+The send path is intentionally narrow. Unknown or low-confidence inquiries create a deterministic `needs_review` case and draft; no-reply classifications create the review case without a draft. Approved known cases send the operator's saved reply body verbatim. Editing the case policy or body changes the digest and requires re-approval before future automatic sends.
+
+Default automation caps are 100 classifications and 20 automatic sends per connected account per UTC day. These caps are not UI-editable. Initial imports and historical rows never gain automatic send authority.
+
+## What Is Not Proven Yet
+
+- Live Google mailbox consent.
+- Live Gmail send.
+- Live Gmail push into the automation enqueue path.
+- Live Gemini draft or automation classifier generation against real mailbox content, beyond a synthetic Gemini JSON smoke against `gemini-3.8-flash`.
+
+## Local Development
+
+Use Node.js 22. The team-local Node path used for verification is `/opt/homebrew/opt/node@22/bin`.
+
+Install dependencies:
 
 ```sh
 npm ci
+npm --prefix functions ci
+```
+
+Run the independent Handle app against local emulators:
+
+```sh
+npm run build:runtime
+firebase emulators:start --config firebase.mixmax.json --project demo-mixmax --only auth,functions,firestore,pubsub
+npm run dev:mixmax -- --port 3210
+```
+
+Open `http://localhost:3210/mail`.
+
+Run a live-config local build only after `configure:live` has written the target Firebase web config to the ignored `.env.live.local` file:
+
+```sh
 npm run configure:live
 npm run dev:live -- --port 3210
 ```
 
-`http://localhost:3210/chat`에서 기존 Flu Google 계정으로 로그인합니다. `configure:live`는 Flu Hosting의 공개 Firebase 웹 설정만 받아 git에서 제외된 `.env.live.local`에 저장합니다. 서버 비밀키, 메일 계정 토큰, 대화 데이터는 복사하지 않습니다. 배포할 별도 도메인은 기존 Firebase Auth의 허용 도메인에 등록해야 합니다.
+Live mode is pinned to `influencer-crm-296ca`. It will not use `influchat-77db6`.
 
-라이브 빌드: `npm run build:live && npm start -- --port 3210`. 라이브 빌드는 `.next-live`, 에뮬레이터 빌드는 `.next`에 저장됩니다.
+## Verification
 
-## 범위와 데이터 흐름
+The current evidence is recorded under `artifacts/verification/`:
 
-- Live feed: 사람·프로그램·메일함별 대화, 검색, 읽음, 답장, 새 메일, AI 초안, 발신 계정 선택.
-- Sequences: 케이스북, 미분류함, 저장 답신, 평가·허가 제어, 읽기 전용 리뷰 보드.
-- Email templates, Outbox, 메일 계정·조직 권한·지식 베이스 등 지원 화면.
-- 기존 서버의 인증, 조직·메일함 접근 제한, 발송 게이트, 중복 방지, 감사 기록을 유지합니다.
+- `automation-unit.log`: 35 Mixmax import/runtime/automation unit tests passed.
+- `automation-e2e.log`: 6 independent Mixmax emulator E2E tests passed.
+- `automation-integration.log`: automation backend integration passed with real Firestore emulator and mocked Gemini/OAuth/Gmail.
+- `automation-send-guard.log`: Gmail transport guard integration passed with mocked Gmail HTTP.
+- `mixmax-sync.log`: Gmail sync fault-recovery integration passed with all Gmail HTTP responses mocked.
+- `automation-deploy-runtime.log`: 23 Mixmax Functions plus `mixmax` Firestore rules/indexes deployed successfully.
+- `automation-deploy-hosting.log`: Hosting released 119 files to `https://influencer-crm-296ca.web.app`.
+- `automation-live-smoke.json`: `/mail` returned HTTP 200 with title `Handle`; 23 Mixmax Functions and five preserved default Functions were ACTIVE; four new automation callables returned unauthenticated 401 without auth.
+- `automation-live-browser.log`: public browser smoke rendered the Handle login screen and mail-connect notice.
+- `automation-typecheck.log`: TypeScript typecheck passed.
+- `automation-build-hosting.log`: production Hosting build passed.
+- `mixmax-deploy-oauth-ready.log`: OAuth-ready runtime redeploy succeeded.
+- `mixmax-oauth-scopes.log`: `gmail.readonly` and `gmail.send` were saved and visible after reload.
+- `mixmax-finalize.log`: captured source inventory finalized with `missingAfter=0` for all 12 source collections.
+- `mixmax-association-repair.log`: six missing nested associations from a 51,207-link source audit were repaired in the target database.
+- `automation-gemini-smoke.json`: synthetic Gemini JSON classification returned from `gemini-3.8-flash`.
 
-```text
-Mixmax UI ── 기존 Auth + Cloud Functions ─ 기존 Firestore/메일 작업
-```
+Latest public browser verification opened `/mail`, rendered the Handle login screen, and showed the separate notice that mail accounts are connected after login. Earlier authenticated browser verification loaded the app with Google sign-in and opened feed, templates, contacts, outbox, and settings without permission or index errors. The observed loaded-page counts were feed 200, templates 47, contacts 200, and outbox 200; these are page counts, not total collection counts.
 
-채팅 화면은 더 이상 30초 단위로 전체 대화 목록을 다시 읽지 않습니다. 초기 로드, 명시적 새로고침, 수신·발송·읽음 처리 같은 사용자/메일 이벤트, 그리고 탭 복귀 시점에만 인증된 callable 읽기로 재검증합니다. 갱신은 메일 수집·발송·AI 생성을 자동 실행하지 않습니다.
-
-이 저장소는 별도 생산 데이터베이스나 중복 메일 워커를 만들지 않습니다. `functions/`의 기존 결합 모듈은 에뮬레이터 검증을 위해 보존하며, 운영 백엔드 배포는 차단돼 있습니다.
-
-## 로컬 검증
+Useful verification commands:
 
 ```sh
-npm --prefix functions ci
-npm --prefix functions run build
-npm test
-npm run build
-npm run typecheck
-npm run verify:e2e
-npm run verify:migration
+npm run test:mixmax
+firebase emulators:exec --config firebase.mixmax.json --project demo-mixmax --only auth,functions,firestore,pubsub --non-interactive 'node scripts/verify-mixmax-e2e.mjs'
 ```
 
-Firebase 에뮬레이터 실행에는 Java가 필요합니다. E2E는 `demo-flu`와 loopback 주소에서 합성 데이터를 사용합니다. 실메일 발송이나 운영 설정 변경을 테스트에 사용하지 않습니다.
+Production deploy commands:
 
-## 배포와 Google 연결
+```sh
+npm run deploy:runtime
+npm run build:hosting
+npm run deploy:hosting
+```
 
-`npm run deploy:hosting`은 정적 프런트엔드만 `influencer-crm-296ca`의 기존 Hosting 사이트에 배포합니다. Functions/Firestore는 배포하지 않습니다. 기존 Flu Auth 프로젝트에 이 Hosting 도메인을 추가했으며, Google 로그인과 공유 데이터 조회를 실제 브라우저에서 확인했습니다.
+See [migration/verification.md](migration/verification.md) for verified behavior and open production checks.
 
-메일 연결은 `/admin/integrations`의 Google 연결을 사용합니다. 별도 동의 창에서 기존 Flu 콜백을 완료한 뒤 Mixmaxclone으로 돌아오면 공통 서버의 연결 상태를 갱신합니다. 현재 운영 서버의 메일 OAuth 정책은 `supercent.io` Workspace만 지원합니다. 개인 Gmail을 회사 로그인에 추가 연결하는 기능은 별도 서버 정책 변경이 필요하며, 이 이관으로 활성화되지 않습니다. 기존 프로젝트의 Firestore 문서나 Auth 사용자를 삭제하지 않습니다.
+## Import Docs
 
-수동 에뮬레이터 실행: `npm run emulators`, 다른 터미널에서 `npm run dev:emu`. 테스트 하네스의 seed 스크립트는 로컬 에뮬레이터에만 사용할 수 있습니다.
-
-이관 파일의 원본/결과 해시: [migration/source-manifest.json](migration/source-manifest.json). 실제 검증 결과와 남은 제약은 [migration/verification.md](migration/verification.md)에 기록합니다.
+- [migration/import-plan.md](migration/import-plan.md): source/target mapping, safety rules, and commands.
+- [migration/automation.md](migration/automation.md): automatic response pipeline contract, operator workflow, and recovery notes.
+- [migration/polling-removal.md](migration/polling-removal.md): why the old timer refresh model is gone.
+- [migration/verification.md](migration/verification.md): current test evidence and remaining rollout checks.

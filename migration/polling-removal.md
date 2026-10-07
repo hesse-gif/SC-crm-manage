@@ -1,17 +1,58 @@
-# Chat polling removal
+# Polling Removal
 
-Mixmax chat no longer starts automatic read polling while the tab is idle.
+The old Flu-style foreground refresh loop is removed from the Mixmax independent app. Mixmax should not use a 30-second client timer to fetch conversation data, and it should not use a 5-second selected-thread polling loop for draft state.
 
-Removed paths:
+## Current Model
 
-- `/chat` foreground dataset refresh every 30 seconds in `LiveDataProvider`.
-- Selected conversation draft-status polling every 5 seconds in the chat page.
+The browser subscribes to target Firestore collections with `onSnapshot`:
 
-Remaining refresh paths are session/user driven:
+- `mixmax_threads`
+- `mixmax_messages`
+- `mixmax_drafts`
+- `mixmax_templates`
+- `mixmax_contacts`
+- `mixmax_cases`
+- `mixmax_sequences`
+- `mixmax_sends`
+- `mixmax_connections`
 
-- Initial route/account reads on mount and scope changes.
-- `requestDataRefresh()` after receive, send, read, attribution, and auto-reply actions.
-- Manual receive/refresh controls.
-- `chat:foreground-sync` as a future push/session event adapter. A successful event invalidates the scoped conversation-list cache and re-runs the mounted account view loader.
+Incoming Gmail changes flow through the server:
 
-Do not add another client interval as a replacement. A future realtime transport should publish a targeted event after the backend has new mail/conversation data, then reuse the existing `chat:foreground-sync` listener in `src/app/(app)/chat/page.tsx`.
+```text
+Gmail watch
+  -> Pub/Sub message on mixmax-gmail
+  -> mixmaxGmailPush queues mixmax_sync_jobs/{connectionId}
+  -> mixmaxSyncJob reads Gmail history changes
+  -> target Firestore projection updates
+  -> browser onSnapshot receives the change
+```
+
+Manual refresh still exists as an explicit user action through `mixmaxSyncMailbox`.
+
+## Why Timers Stay Out
+
+- Client intervals create repeated reads even when no mailbox changed.
+- Polling does not make Gmail ingestion faster; Gmail watch/history determines when new mail is available.
+- Timers increase idle cost across every open browser tab.
+- Timers risk overwriting active composer state if the UI treats refresh as a full reload.
+
+The latest Mixmax E2E suite in `artifacts/verification/mixmax-e2e-draft-context.log` verified that a new target Firestore message appears through realtime subscription and that no callable POSTs are made during a 35-second idle window.
+
+## Allowed Refresh Paths
+
+- Initial page load and authenticated workspace bootstrap.
+- Firestore realtime updates from target collections.
+- Explicit user actions such as save draft, save template, mark read, archive, send, generate AI draft, and manual mailbox refresh.
+- Server-side Gmail watch renewal, sync retry, and full-sync fallback.
+
+## Do Not Reintroduce
+
+Do not add browser intervals for:
+
+- conversation list refresh
+- selected thread refresh
+- draft status refresh
+- mailbox sync polling
+- AI draft polling
+
+If a future feature needs progress updates, write a server-owned status document in the `mixmax` database and let the browser subscribe to that document.

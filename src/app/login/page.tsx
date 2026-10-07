@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Google } from "@/components/icons";
 import { signInWithGoogleOrEmulator } from "@/lib/auth";
@@ -47,6 +47,15 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const independentMixmax = process.env.NEXT_PUBLIC_MIXMAX_INDEPENDENT === "1";
+
+  useEffect(() => {
+    if (independentMixmax) router.replace("/mail");
+  }, [independentMixmax, router]);
+
+  if (independentMixmax) {
+    return null;
+  }
 
   async function handleLogin() {
     setLoading(true);

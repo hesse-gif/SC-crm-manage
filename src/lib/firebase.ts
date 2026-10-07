@@ -5,9 +5,11 @@ import { initializeApp, getApps, type FirebaseOptions } from "firebase/app";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 // SEC-P0-004: 클라이언트는 Firestore SDK 미사용 — 모든 데이터 접근은 Functions(callable) 경유.
 
 const useEmulator = process.env.NEXT_PUBLIC_USE_EMULATOR === "1";
+const independentMixmax = process.env.NEXT_PUBLIC_MIXMAX_INDEPENDENT === "1";
 const functionsEmulatorHost = process.env.NEXT_PUBLIC_FUNCTIONS_EMULATOR_HOST ?? "127.0.0.1:5001";
 const authEmulatorHost = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 
@@ -135,7 +137,7 @@ export function getFluCallableName(logicalName: string): string {
 //  /influchat-77db6/us-central1/* 가 되어 demo-flu 에뮬레이터에 매칭되지 않고 → 404 → CORS preflight 실패 → SDK "internal".
 //  운영(useEmulator=false)에선 실제 config를 그대로 쓴다. cors:true 가 운영 CORS를 처리.)
 const firebaseConfig: FirebaseOptions = useEmulator
-  ? { apiKey: "demo-key", projectId: "demo-flu" }
+  ? { apiKey: "demo-key", projectId: independentMixmax ? "demo-mixmax" : "demo-flu", authDomain: independentMixmax ? "demo-mixmax.firebaseapp.com" : "demo-flu.firebaseapp.com" }
   : {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
       authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -144,6 +146,10 @@ const firebaseConfig: FirebaseOptions = useEmulator
       messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
       appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     };
+
+if (independentMixmax && !useEmulator && firebaseConfig.projectId !== "influencer-crm-296ca") {
+  throw new Error("Mixmax must use its own Firebase project: influencer-crm-296ca.");
+}
 
 const firebaseAppName =
   fluRuntimeEnvironment === "staging" ||
@@ -160,7 +166,8 @@ export const auth = getAuth(firebaseApp);
 // Must be assigned before auth persistence is observed or any sign-in starts.
 // null explicitly selects the parent realm for production/default emulator.
 auth.tenantId = fluAuthTenantId;
-export const functions = getFunctions(firebaseApp);
+export const functions = getFunctions(firebaseApp, independentMixmax ? "asia-northeast3" : "us-central1");
+export const db = getFirestore(firebaseApp, "mixmax");
 const appCheckSiteKey = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_SITE_KEY;
 const appCheckDebugToken = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN;
 
@@ -188,4 +195,8 @@ if (useEmulator && typeof window !== "undefined" && !globalThis.__FLU_EMU__) {
   const [functionsHost, functionsPort] = functionsEmulatorHost.replace(/^https?:\/\//, "").split(":");
   connectFunctionsEmulator(functions, functionsHost || "127.0.0.1", Number(functionsPort) || 5001);
   connectAuthEmulator(auth, authEmulatorHost.startsWith("http") ? authEmulatorHost : `http://${authEmulatorHost}`, { disableWarnings: true });
+  if (independentMixmax) {
+    const [host, port] = (process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8480").split(":");
+    connectFirestoreEmulator(db, host, Number(port));
+  }
 }

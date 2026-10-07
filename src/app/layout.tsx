@@ -12,8 +12,8 @@ const RELEASE_RUNTIME_ENVIRONMENT = process.env.NEXT_PUBLIC_FLU_RUNTIME_ENV ?? "
 const RELEASE_HOSTING_SITE = process.env.NEXT_PUBLIC_FLU_HOSTING_SITE ?? "unbound";
 
 export const metadata: Metadata = {
-  title: "Mixmax",
-  description: "Mixmax 스타일의 AI 어시스트 커뮤니케이션 워크스페이스",
+  title: "Handle",
+  description: "Routine emails, already handled. 반복되는 메일을 처리하는 자동응대 비서.",
 };
 
 export const viewport: Viewport = {
@@ -34,9 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <ChunkErrorReloader />
-        <RoleProvider>
+        {process.env.NEXT_PUBLIC_MIXMAX_INDEPENDENT === "1" ? children : <RoleProvider>
           <ViewAsProvider>{children}</ViewAsProvider>
-        </RoleProvider>
+        </RoleProvider>}
       </body>
     </html>
   );

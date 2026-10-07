@@ -1,0 +1,10 @@
+{
+  "indexes": [
+    { "collectionGroup": "mixmax_automation_runs", "queryScope": "COLLECTION", "fields": [{"fieldPath":"workspaceId","order":"ASCENDING"},{"fieldPath":"ownerUid","order":"ASCENDING"},{"fieldPath":"threadId","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}] },
+    { "collectionGroup": "mixmax_threads", "queryScope": "COLLECTION", "fields": [{"fieldPath":"workspaceId","order":"ASCENDING"},{"fieldPath":"lastMessageAt","order":"DESCENDING"}] },
+    { "collectionGroup": "mixmax_messages", "queryScope": "COLLECTION", "fields": [{"fieldPath":"workspaceId","order":"ASCENDING"},{"fieldPath":"threadId","order":"ASCENDING"},{"fieldPath":"sentAt","order":"ASCENDING"}] },
+    { "collectionGroup": "mixmax_messages", "queryScope": "COLLECTION", "fields": [{"fieldPath":"workspaceId","order":"ASCENDING"},{"fieldPath":"threadId","order":"ASCENDING"},{"fieldPath":"sentAt","order":"DESCENDING"}] },
+    { "collectionGroup": "mixmax_sends", "queryScope": "COLLECTION", "fields": [{"fieldPath":"workspaceId","order":"ASCENDING"},{"fieldPath":"ownerUid","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}] }
+  ],
+  "fieldOverrides": []
+}

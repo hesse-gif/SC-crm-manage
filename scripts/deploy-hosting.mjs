@@ -10,7 +10,7 @@ if (config.functions || config.firestore || config.hosting?.target !== 'mixmaxcl
 }
 const build = spawnSync(process.execPath, ['scripts/run-next.mjs', 'build', '--live', '--export'], { cwd: root, stdio: 'inherit' });
 if (build.status !== 0) process.exit(build.status ?? 1);
-for (const file of ['index.html', 'chat.html', 'chat/auto.html', 'login.html']) {
+for (const file of ['index.html', 'mail.html']) {
   if (!existsSync(resolve(root, 'out', file))) throw new Error(`Missing exported route ${file}`);
 }
 const deployed = spawnSync(resolve(root, 'node_modules/.bin/firebase'), [
