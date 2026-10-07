@@ -2,7 +2,7 @@
   "name": "mixmaxclone",
   "version": "0.1.0",
   "private": true,
-  "description": "Independent Flu Chat workspace with shared live data",
+  "description": "Mixmax workspace with independent mail, AI drafts and migrated Flu data",
   "engines": {
     "node": "22"
   },
@@ -21,7 +21,12 @@
     "configure:live": "node scripts/configure-live.mjs",
     "verify:migration": "node scripts/verify-migration.mjs",
     "build:hosting": "node scripts/run-next.mjs build --live --export",
-    "deploy:hosting": "node scripts/deploy-hosting.mjs"
+    "deploy:hosting": "node scripts/deploy-hosting.mjs",
+    "build:runtime": "node scripts/build-mixmax-functions.mjs",
+    "test:mixmax": "node scripts/build-mixmax-functions.mjs && node --test --test-concurrency=1 tests/mixmax-import.test.mjs tests/mixmax-reconcile-messages.test.mjs tests/mixmax-finalize-import.test.mjs tests/mixmax-runtime.test.mjs",
+    "import:flu": "node scripts/mixmax-import-flu.mjs",
+    "dev:mixmax": "NEXT_PUBLIC_MIXMAX_INDEPENDENT=1 NEXT_PUBLIC_FUNCTIONS_EMULATOR_HOST=127.0.0.1:5401 NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9499 NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST=127.0.0.1:8480 node scripts/run-next.mjs dev --emulator",
+    "deploy:runtime": "node scripts/deploy-mixmax.mjs"
   },
   "dependencies": {
     "firebase": "^12.15.0",

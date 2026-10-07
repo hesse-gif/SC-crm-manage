@@ -34,9 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <ChunkErrorReloader />
-        <RoleProvider>
+        {process.env.NEXT_PUBLIC_MIXMAX_INDEPENDENT === "1" ? children : <RoleProvider>
           <ViewAsProvider>{children}</ViewAsProvider>
-        </RoleProvider>
+        </RoleProvider>}
       </body>
     </html>
   );

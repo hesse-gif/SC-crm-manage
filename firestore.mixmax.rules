@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function member() { return request.auth != null && request.auth.token.email_verified == true && exists(/databases/$(database)/documents/mixmax_members/$(request.auth.uid)); }
+    function scope() { return member() && get(/databases/$(database)/documents/mixmax_members/$(request.auth.uid)).data.get('disabled', false) == false && resource.data.workspaceId == get(/databases/$(database)/documents/mixmax_members/$(request.auth.uid)).data.workspaceId; }
+    match /mixmax_members/{uid} { allow read: if request.auth != null && request.auth.uid == uid; }
+    match /{collection}/{id} {
+      allow read: if collection in ['mixmax_threads', 'mixmax_messages', 'mixmax_contacts', 'mixmax_templates', 'mixmax_cases', 'mixmax_sequences'] && scope();
+      allow read: if collection in ['mixmax_connections', 'mixmax_sends'] && scope() && (resource.data.ownerUid == request.auth.uid || (collection == 'mixmax_sends' && resource.data.ownerUid == ''));
+      allow read: if collection == 'mixmax_drafts' && scope() && (resource.data.get('ownerUid', '') == '' || resource.data.ownerUid == request.auth.uid);
+      allow write: if false;
+    }
+  }
+}

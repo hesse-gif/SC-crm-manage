@@ -16,12 +16,13 @@ if (emulator) {
 } else {
   const configPath = resolve(root, '.env.live.local');
   if (!existsSync(configPath)) throw new Error('Run npm run configure:live first, or use npm run dev:emu for local fixtures.');
-  const allowed = /^NEXT_PUBLIC_(FIREBASE_(API_KEY|AUTH_DOMAIN|PROJECT_ID|STORAGE_BUCKET|MESSAGING_SENDER_ID|APP_ID|APPCHECK_SITE_KEY)|FLU_RUNTIME_ENV|USE_EMULATOR)$/;
+  const allowed = /^NEXT_PUBLIC_(FIREBASE_(API_KEY|AUTH_DOMAIN|PROJECT_ID|STORAGE_BUCKET|MESSAGING_SENDER_ID|APP_ID|APPCHECK_SITE_KEY)|FLU_RUNTIME_ENV|USE_EMULATOR|MIXMAX_INDEPENDENT)$/;
   for (const line of readFileSync(configPath, 'utf8').split(/\r?\n/)) {
     const match = line.match(/^([A-Z_]+)=(.*)$/);
     if (match && allowed.test(match[1])) env[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
   }
-  if (env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== 'influchat-77db6') throw new Error('Live mode must share the existing Flu Firebase project.');
+  if (env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== 'influencer-crm-296ca') throw new Error('Live mode must use the Mixmax Firebase project.');
+  env.NEXT_PUBLIC_MIXMAX_INDEPENDENT = '1';
   env.NEXT_PUBLIC_USE_EMULATOR = '0';
   env.NEXT_PUBLIC_FLU_RUNTIME_ENV = 'production';
   delete env.NEXT_PUBLIC_FIREBASE_AUTH_TENANT_ID;
@@ -33,7 +34,7 @@ if (args.includes('--export')) {
   env.MIXMAX_NEXT_DIST_DIR = 'out';
 }
 const nextArgs = args.filter(arg => !['--live', '--emulator', '--export'].includes(arg));
-console.log(`Mixmaxclone: ${emulator ? 'local emulator data' : 'shared Flu live data'} (${command})`);
+console.log(`Mixmaxclone: ${emulator ? 'local emulator data' : 'Mixmax-owned live data'} (${command})`);
 const child = spawn(process.execPath, [resolve(root, 'node_modules/next/dist/bin/next'), command, ...nextArgs], { cwd: root, env, stdio: 'inherit' });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
 child.on('error', error => { console.error(error.message); process.exitCode = 1; });

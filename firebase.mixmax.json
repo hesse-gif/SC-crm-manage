@@ -1,0 +1,13 @@
+{
+  "functions": [{ "source": ".mixmax-functions", "codebase": "mixmax", "predeploy": ["node \"$PROJECT_DIR/scripts/build-mixmax-functions.mjs\""] }],
+  "firestore": { "database": "mixmax", "rules": "firestore.mixmax.rules", "indexes": "firestore.mixmax.indexes.json" },
+  "emulators": {
+    "auth": { "host": "127.0.0.1", "port": 9499 },
+    "functions": { "host": "127.0.0.1", "port": 5401 },
+    "firestore": { "host": "127.0.0.1", "port": 8480 },
+    "pubsub": { "host": "127.0.0.1", "port": 8585 },
+    "hub": { "host": "127.0.0.1", "port": 4501 },
+    "logging": { "host": "127.0.0.1", "port": 4701 },
+    "ui": { "enabled": false }, "singleProjectMode": true
+  }
+}

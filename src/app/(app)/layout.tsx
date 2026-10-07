@@ -3,6 +3,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { AuthGate } from "@/components/shell/AuthGate";
 import { LiveDataProvider } from "@/lib/live";
 import { LoadingStatus } from "@/components/ui/LoadingStatus";
+import { MixmaxRedirect } from "@/components/shell/MixmaxRedirect";
 
 // (app) 라우트 그룹: URL에 영향 없이 셸(사이드바+탑바)을 입힌다.
 // 정적 Firebase Hosting 배포를 위해 클라이언트 훅(useSearchParams 등)을 쓰는 셸 트리를 Suspense로 감싼다.
@@ -15,6 +16,7 @@ function AppShellFallback() {
 }
 
 export default function AppLayout({ children }: { children: ReactNode }) {
+  if (process.env.NEXT_PUBLIC_MIXMAX_INDEPENDENT === "1") return <MixmaxRedirect />;
   return (
     <Suspense fallback={<AppShellFallback />}>
       <AuthGate>

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "outDir": "../.mixmax-functions/lib", "rootDir": "mixmax", "sourceMap": false },
+  "include": ["mixmax/**/*.ts"]
+}

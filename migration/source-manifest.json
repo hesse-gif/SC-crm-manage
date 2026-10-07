@@ -1,13 +1,13 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "repository": "supercent-io/Flu",
     "commit": "be5915aeb455b3ce378e022125dcc09d514b8d8d",
     "release": "0.6.116"
   },
-  "productionDataStrategy": "shared-existing-flu-backend",
+  "productionDataStrategy": "independent-mixmax-runtime-with-one-time-flu-import",
   "hostingProject": "influencer-crm-296ca",
-  "backendProject": "influchat-77db6",
+  "backendProject": "influencer-crm-296ca",
   "files": [
     {
       "path": ".firebaserc",
@@ -18,13 +18,13 @@
     {
       "path": ".gitignore",
       "sourceSha256": "1beec46ca582796472096dd8acb0058553ba11ee97ba3cda64756a927cb10c8b",
-      "targetSha256": "6ad4242c982464e99d87abe46a7553290ff919c7310ea9afaa9333cdeee17a28",
+      "targetSha256": "4e04da6b393ed846d7e741931892013a006a195fc51c52b7211f5f5481a825b6",
       "modified": true
     },
     {
       "path": "README.md",
       "sourceSha256": "bb2ba2a5f843b2980f99959304f920f971ce3923ecc4bf78d359efbc6289c34e",
-      "targetSha256": "c4582636f042a45d4f96637ff3505b159c1f0cc0a0bc39c95f8971ca46a554a5",
+      "targetSha256": "33ceedc7695a32a6b802f8fd1985302885dd101dc5246da2888dc0c7f1d5bc44",
       "modified": true
     },
     {
@@ -3102,7 +3102,7 @@
     {
       "path": "package.json",
       "sourceSha256": "702e05c025cc2e639fee1aa92b1f35f360a8f82d5358414a397690af58e7a570",
-      "targetSha256": "55351204cb03de9fc013313634c144c470ddce14bdfb793b1e5522815a12456d",
+      "targetSha256": "b61939b3f34c0c1e6a7194c95f9c462a72cd453ce618c391b9881e3f07c12ebd",
       "modified": true
     },
     {
@@ -3510,7 +3510,7 @@
     {
       "path": "src/app/(app)/chat/page.tsx",
       "sourceSha256": "3bf337089bb0a8512803c225d297bb06bc8cc9885fcd88683f9336e91f1200f6",
-      "targetSha256": "57eaa1c676e9b4d8c0fb1feae963679d11b5cf63cab13983d05ae3ad66e3cdf8",
+      "targetSha256": "28ffb0cd67c6ca94cf0eddba806ca9d6a3d4fce488f8f3ea8ff326c17be1494d",
       "modified": true
     },
     {
@@ -3534,7 +3534,7 @@
     {
       "path": "src/app/(app)/layout.tsx",
       "sourceSha256": "6f076c1c690af78ebda46e34c02de0ed62cc48d28f6f0857015d8fa3e53ed69e",
-      "targetSha256": "d2dd4061d6b2858064b94252b8b464361561fdabfd9f0c84354b619e37b475aa",
+      "targetSha256": "d5f37fc64dabea9711ea8e6f9ccffe21a521eba399672470a43d3dab543fde15",
       "modified": true
     },
     {
@@ -3558,19 +3558,19 @@
     {
       "path": "src/app/layout.tsx",
       "sourceSha256": "ad34ede46f3da02cc07a234b3c38c598e4edea001325f9d85f14f05b93061282",
-      "targetSha256": "8e07cfc5764e4d7754c3303cbf6b92235eb25959f5493368f40a39e47edaa22b",
+      "targetSha256": "7ad11121c7d53ae7b49ac68f4d900352f4a5fe7c5d202d476530c71a57b582f5",
       "modified": true
     },
     {
       "path": "src/app/login/page.tsx",
       "sourceSha256": "ab68328a5aefc8ec2f69072d3905468cf323cb357c347a8e502fd0f913fb90de",
-      "targetSha256": "354ec5eec9a819f2c6290e465dbc01d2a0775e061c34841710e8cf07f7b3729f",
+      "targetSha256": "34f50fb695d46149368bb65d435a28c0e5942d83ce4bfe82cb8aa18ac4de7fe0",
       "modified": true
     },
     {
       "path": "src/app/page.tsx",
       "sourceSha256": "ca5729612a0a9d33c564070bae1633f4dd47f9dfad2838d8af0826e93f2f68f5",
-      "targetSha256": "c892468a7031b485a4e49a24a3a1c3e124e1b3901e4b34571d2616303582f41e",
+      "targetSha256": "87b71475d3fc75780b81a3b8edd932094b2db25ed38be34b41b0f46d5d71642d",
       "modified": true
     },
     {
@@ -3984,13 +3984,13 @@
     {
       "path": "src/components/shell/Sidebar.tsx",
       "sourceSha256": "4d3322d6d6423ff9d41b1e4dc58ea1dfd2e5def862e9528f2395862312b1d1f2",
-      "targetSha256": "70c2f87880462eb3f79c8fd057b4a1d989759d57dc61ee5296cb88c10a3e6c1c",
+      "targetSha256": "e98cec8dd0f4e082c6ebe60d8daa46683da1a73391f31b85e5ab6e87cd01144d",
       "modified": true
     },
     {
       "path": "src/components/shell/Topbar.tsx",
       "sourceSha256": "97c7653f43ab5748a3e176e2d53a9eff0ec6d0448801d24dadc68556f3f45828",
-      "targetSha256": "6db7622f1c4152ca2de939bcb0ba85a82555e8ca3c1c59c1eab72a24af898f4f",
+      "targetSha256": "9c8934c2ecd2f621a0f5615dba11d13bd494c710a15dae56a4afde9b06a91644",
       "modified": true
     },
     {
@@ -4386,13 +4386,13 @@
     {
       "path": "src/lib/firebase.ts",
       "sourceSha256": "1da67709d23315170974af848bbee73a2d948eea2188eb347299a5f58d62cfb4",
-      "targetSha256": "1da67709d23315170974af848bbee73a2d948eea2188eb347299a5f58d62cfb4",
-      "modified": false
+      "targetSha256": "87aeefd3a7a1b9dc0a4ddc93810d7e30d5394b2c4e7646f6c324953863554106",
+      "modified": true
     },
     {
       "path": "src/lib/live.tsx",
       "sourceSha256": "f4ddca344444ccb36c43919a059c59d64fc60efebe733c6c9d9942b5d92d1e2d",
-      "targetSha256": "01da32afc0cd5ae2583d8fe7e1cf0e631d1346208822fdff0d980c908ff48638",
+      "targetSha256": "066df4749fc72c32a48553584d27dcf854b6eb25cef4dad7aa80adb8f5609442",
       "modified": true
     },
     {
@@ -4554,7 +4554,7 @@
     {
       "path": "src/lib/nav.ts",
       "sourceSha256": "fdd785252b65487af76c8d235e87005afca3d3d77f7020b0feaec2d72f5f0357",
-      "targetSha256": "c52db8253ee9c7bd76c63a22582b38f97f1c5bc04da25dc211bedb476b55ffa3",
+      "targetSha256": "0ebb22ec86acd5635c2caa8ab75f1cefcf2c8fe8bc363e75e064cd0c325c6eac",
       "modified": true
     },
     {
@@ -5126,6 +5126,59 @@
       "sourceSha256": "3ed8cf823748efe7991cd2e6db34c1135bb8efed8aea62c50a61901d73221ff3",
       "targetSha256": "2529b9e859dc1d8663bebd4b39f50594903325ebede4bb39067f349f7340654f",
       "modified": true
+    }
+  ],
+  "database": "mixmax",
+  "runtimeCodebase": "mixmax",
+  "sourceReadOnly": true,
+  "independentRuntimeFiles": [
+    {
+      "path": "firebase.mixmax.json",
+      "sha256": "5249c8d3dc46a93db3e1d8f99b5cbb53026a5566d294064c979aa910b7513a70"
+    },
+    {
+      "path": "firestore.mixmax.indexes.json",
+      "sha256": "a0287e75d5ae7a796f5b0d608e9dab891fc68c339c01d9cd4d63c5ac09e49707"
+    },
+    {
+      "path": "firestore.mixmax.rules",
+      "sha256": "820d0f28ec0fd96e77d8a3d867dcff620d5ddfeef0f60a5819f2a8abcf3859ce"
+    },
+    {
+      "path": "functions/mixmax/common.ts",
+      "sha256": "60e6054714719e9a5ea2cd1a175f0f1e493d4232d4c51f213f4e8ff1368bb727"
+    },
+    {
+      "path": "functions/mixmax/gmail-core.ts",
+      "sha256": "75506b0083f9dcfaaefd719da4d1de92d75bd914760597b9919ff81a762708d0"
+    },
+    {
+      "path": "functions/mixmax/gmail.ts",
+      "sha256": "2b70e3564c96f156b7c5cf67fccb43a04eb757ebaef258df3e630287a6c59b76"
+    },
+    {
+      "path": "functions/mixmax/index.ts",
+      "sha256": "9dd94126a0b17db66c60cfa9904784bf40abd75e6618dd9c7f3cffdcc973b974"
+    },
+    {
+      "path": "functions/mixmax/workspace.ts",
+      "sha256": "8d293181d54f535ee552048bd853f559f03e47e1a12653da9c81aeb58404a184"
+    },
+    {
+      "path": "src/app/mail/page.tsx",
+      "sha256": "1741c6eae486ff0d965ebfaa39f17b517eebf3bf31b134333c28c13ce9f12783"
+    },
+    {
+      "path": "src/components/mixmax/Workspace.tsx",
+      "sha256": "570f274e97ad4e048221fe0c4b15ed6614f43696b7eb84574f3ba1f137662fe9"
+    },
+    {
+      "path": "src/components/mixmax/workspace.module.css",
+      "sha256": "0efd6ce27d7b5527070475aa0a2aaf600375fe1dd6c6504f0dd32516fdbfc0a1"
+    },
+    {
+      "path": "src/lib/mixmax.ts",
+      "sha256": "2b2b27188f588fabd7be6febb8a7951431189ff04839efabeb66466fe5bc282c"
     }
   ]
 }
