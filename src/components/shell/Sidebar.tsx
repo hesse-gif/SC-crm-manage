@@ -27,6 +27,10 @@ import { MailConnectNotice } from "./MailConnectNotice";
 
 const ROLE_ORDER: Role[] = ["super_admin", "admin", "manager", "viewer", "guest"];
 const SIDEBAR_COLLAPSED_KEY = "flu.sidebar.collapsed";
+const MIXMAX_NAV_CHROME = "bg-[#101112] text-white border-[#202124]";
+const MIXMAX_NAV_MUTED = "text-white/60";
+const MIXMAX_NAV_ACTIVE = "bg-white/10 text-[#c5df23]";
+const MIXMAX_NAV_HOVER = "hover:bg-white/10 hover:text-white";
 
 function warnSidebarStorageFailure(error: unknown) {
   if (error instanceof DOMException && (error.name === "SecurityError" || error.name === "QuotaExceededError")) return;
@@ -146,7 +150,7 @@ export function Sidebar({
     const unread = typeof conversation.unread === "number" ? conversation.unread : 0;
     return unread > 0;
   });
-  const actionLabel = ws === "admin" ? "멤버 초대" : "새 메시지";
+  const actionLabel = ws === "admin" ? "멤버 초대" : "Compose";
   const expanded = mobileOpen || !collapsed;
 
   // 활성 판정은 nav.ts의 isNavActive 사용 (통합 경로 match[] 포함)
@@ -160,7 +164,8 @@ export function Sidebar({
         if (event.target instanceof Element && event.target.closest("a")) onMobileNavigate();
       }}
       className={cn(
-        "fixed inset-y-0 left-0 z-40 h-dvh w-[min(280px,calc(100vw-48px))] flex-col border-r border-line bg-paper shadow-pop md:static md:z-auto md:h-screen md:shrink-0 md:shadow-none md:transition-[width] md:duration-200",
+        "fixed inset-y-0 left-0 z-40 h-dvh w-[min(280px,calc(100vw-48px))] flex-col border-r shadow-pop md:static md:z-auto md:h-screen md:shrink-0 md:shadow-none md:transition-[width] md:duration-200",
+        MIXMAX_NAV_CHROME,
         mobileOpen ? "flex" : "hidden md:flex",
         collapsed ? "md:w-[64px]" : "md:w-[240px]",
       )}
@@ -168,16 +173,15 @@ export function Sidebar({
       {/* Brand → 런처 */}
       <div className="flex h-16 items-center">
         <Link href="/" className="flex min-w-0 flex-1 items-center gap-2.5 px-4" title="런처로">
-          <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-md bg-white ring-1 ring-line">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/supercent-source.png" alt="Supercent" className="h-full w-full object-contain p-[3px]" />
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-gradient-to-br from-[#ff3ef0] via-[#9b5cff] to-[#48e0ff] text-[18px] font-black leading-none text-white">
+            M
           </span>
           {expanded && (
             <div className="min-w-0 leading-tight">
-              <div className="text-sm font-extrabold text-ink">Mixmaxclone</div>
-              <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
-                <span className="truncate">Chat 워크스페이스</span>
-                <span className="shrink-0 rounded bg-fill px-1 text-[10px] font-semibold text-ink-4">
+              <div className="text-sm font-extrabold text-white">Mixmax</div>
+              <div className="flex items-center gap-1.5 text-[11px] text-white/40">
+                <span className="truncate">Chat workspace</span>
+                <span className="shrink-0 rounded bg-white/10 px-1 text-[10px] font-semibold text-white/40">
                   {appVersionLabel(APP_VERSION, APP_SOURCE_COMMIT_SHORT)}
                 </span>
               </div>
@@ -189,7 +193,7 @@ export function Sidebar({
           type="button"
           aria-label="메뉴 닫기"
           onClick={onMobileClose}
-          className="mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-2 transition-colors hover:bg-fill active:scale-[0.96] md:hidden"
+          className="mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-md text-white/60 transition-colors hover:bg-white/10 active:scale-[0.96] md:hidden"
         >
           <Close className="h-5 w-5" />
         </button>
@@ -221,7 +225,7 @@ export function Sidebar({
         </div>
       ) : (
         <div className="px-3 pb-2">
-          <div className="flex gap-1 rounded-md bg-fill p-1">
+          <div className="flex gap-1 rounded-md bg-white/5 p-1">
             {switcher.map((w) => {
               const Icon = icons[w.icon];
               const active = ws === w.key;
@@ -231,7 +235,7 @@ export function Sidebar({
                   href={w.href}
                   className={cn(
                     "flex h-10 flex-1 items-center justify-center gap-1 rounded-[6px] text-[12px] font-semibold transition-colors md:h-8",
-                    active ? "bg-paper text-ink shadow-card" : "text-ink-2 hover:text-ink",
+                    active ? "bg-white/10 text-white shadow-card" : "text-white/60 hover:text-white",
                   )}
                 >
                   <Icon className="h-[15px] w-[15px]" />
@@ -250,7 +254,7 @@ export function Sidebar({
       <div className="px-3 pb-2">
         <Link
           href={ws === "admin" ? "/admin/members" : "/chat?compose=new"}
-          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-md bg-accent text-[13px] font-semibold text-white transition-colors hover:bg-accent/90 md:h-9"
+          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white/10 text-[13px] font-semibold text-white/70 transition-colors hover:bg-white/15 hover:text-white md:h-10"
           title={actionLabel}
         >
           <Plus className="h-4 w-4" />
@@ -270,11 +274,11 @@ export function Sidebar({
               title={item.label}
               className={cn(
                 "group relative flex h-10 items-center gap-3 rounded-md px-2.5 text-sm font-medium transition-colors",
-                active ? "bg-accent-soft text-accent" : "text-ink-2 hover:bg-fill hover:text-ink",
+                active ? MIXMAX_NAV_ACTIVE : `${MIXMAX_NAV_MUTED} ${MIXMAX_NAV_HOVER}`,
               )}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-accent" />
+                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-[#c5df23]" />
               )}
               <Icon className="h-[20px] w-[20px] shrink-0" />
               {expanded && <span className="flex-1 truncate">{item.label}</span>}
@@ -293,7 +297,7 @@ export function Sidebar({
       {expanded && <MailConnectNotice />}
 
       {/* Footer: gallery + account widget + collapse */}
-      <div className="shrink-0 border-t border-line px-2 pb-3 pt-2">
+      <div className="shrink-0 border-t border-white/10 px-2 pb-3 pt-2">
         {FOOTER_NAV.map((item) => {
           const Icon = icons[item.icon];
           const active = isNavActive(item, pathname);
@@ -304,7 +308,7 @@ export function Sidebar({
               title={item.label}
               className={cn(
                 "mb-1 flex h-10 items-center gap-3 rounded-md px-2.5 text-[13px] font-medium transition-colors md:h-9",
-                active ? "bg-accent-soft text-accent" : "text-ink-3 hover:bg-fill hover:text-ink",
+                active ? MIXMAX_NAV_ACTIVE : `${MIXMAX_NAV_MUTED} ${MIXMAX_NAV_HOVER}`,
               )}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -367,7 +371,7 @@ export function Sidebar({
               setMenuOpen((o) => !o);
             }}
             className={cn(
-              "flex w-full items-center gap-2.5 rounded-md p-1.5 transition-colors hover:bg-fill",
+              "flex w-full items-center gap-2.5 rounded-md p-1.5 transition-colors hover:bg-white/10",
               !expanded && "justify-center",
             )}
           >
@@ -379,12 +383,12 @@ export function Sidebar({
             {expanded && (
               <>
                 <span className="min-w-0 flex-1 text-left leading-tight">
-                  <span className="block truncate text-[13px] font-bold text-ink">
+                  <span className="block truncate text-[13px] font-bold text-white">
                     {displayName}
                   </span>
-                  <span className="block text-[11px] text-ink-3">{ROLES[role].label}</span>
+                  <span className="block text-[11px] text-white/40">{ROLES[role].label}</span>
                 </span>
-                <Dots className="h-4 w-4 shrink-0 text-ink-3" />
+                <Dots className="h-4 w-4 shrink-0 text-white/40" />
               </>
             )}
           </button>
@@ -394,7 +398,7 @@ export function Sidebar({
           onClick={() => setCollapsed((c) => !c)}
           aria-expanded={!collapsed}
           className={cn(
-            "mt-1 hidden h-10 w-full items-center gap-3 rounded-md text-[13px] font-medium text-ink-4 transition-colors hover:bg-fill hover:text-ink md:flex",
+            "mt-1 hidden h-10 w-full items-center gap-3 rounded-md text-[13px] font-medium text-white/40 transition-colors hover:bg-white/10 hover:text-white md:flex",
             collapsed ? "justify-center px-0" : "px-2.5",
           )}
           title={collapsed ? "펼치기" : "접기"}

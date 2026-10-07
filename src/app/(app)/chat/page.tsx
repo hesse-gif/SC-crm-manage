@@ -2897,79 +2897,6 @@ export default function InboxPage() {
     };
   }, [authReady, canRead]);
 
-  // 수신 직후 서버가 생성한 초안은 별도 클릭 없이 열린 대화에 도착해야 한다.
-  // 완료/억제 상태가 확인되면 폴링을 멈추고, 대화 전체를 비우지 않은 채 현재 행만 병합한다.
-  useEffect(() => {
-    if (!authReady || !canRead || !selectedConversationId) return;
-    if (["draft_only", "scheduled"].includes(conv?.autoReplyStatus ?? "") || conv?.autoReplyBlockedReason) return;
-    let cancelled = false;
-    let timer = 0;
-    let attempts = 0;
-    let inFlight = false;
-    const schedulePoll = (delayMs: number) => {
-      window.clearTimeout(timer);
-      if (cancelled || attempts >= 12 || document.visibilityState !== "visible") return;
-      timer = window.setTimeout(() => void poll(), delayMs);
-    };
-    const poll = async () => {
-      if (cancelled || inFlight || document.visibilityState !== "visible") return;
-      inFlight = true;
-      attempts += 1;
-      try {
-        const result = await listConversations({
-          ids: [selectedConversationId],
-          limit: 1,
-          mailAccountId: selectedViewMailAccountId,
-          ...(isAdminRole && (isSuperAdminAllMailboxView || showUnregisteredConversations) ? { includeUnregistered: true } : {}),
-          ...viewAsParams,
-        });
-        if (cancelled) return;
-        const rawRows = Array.isArray((result as { rows?: unknown }).rows)
-          ? (result as { rows: unknown[] }).rows
-          : [];
-        const next = normalizeConversations(rawRows).filter(isDefaultChatConversation);
-        if (next.length > 0) {
-          const refreshSelected = (current: AccountScopedConversationState | null) => {
-            if (!current || current.scopeKey !== mailAccountViewScopeKey) return current;
-            return {
-              ...current,
-              rows: current.rows.map((row) => next.find((item) => String(item.id) === String(row.id)) ?? row),
-            };
-          };
-          setMailAccountViewConversations(refreshSelected);
-          setUnregisteredInclusiveConversations(refreshSelected);
-          setTargetedMailboxConversations((current) => current?.scopeKey === mailAccountViewScopeKey
-            ? { ...current, rows: current.rows.map((row) => next.find((item) => String(item.id) === String(row.id)) ?? row) }
-            : current);
-          mutate((prev) => ({
-            ...prev,
-            conversations: [
-              ...next,
-              ...prev.conversations.filter((conversation) => !next.some((item) => item.id === String(conversation.id))),
-            ],
-          }));
-          const refreshed = next[0];
-          if (["draft_only", "scheduled"].includes(refreshed.autoReplyStatus ?? "") || refreshed.autoReplyBlockedReason) return;
-        }
-      } catch {
-        // The next bounded poll is allowed to recover a transient callable error.
-      } finally {
-        inFlight = false;
-      }
-      schedulePoll(5_000);
-    };
-    const onVisible = () => {
-      if (document.visibilityState === "visible") schedulePoll(0);
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    schedulePoll(2_000);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [authReady, canRead, conv?.autoReplyBlockedReason, conv?.autoReplyStatus, isAdminRole, isSuperAdminAllMailboxView, mailAccountViewScopeKey, mutate, selectedConversationId, selectedViewMailAccountId, showUnregisteredConversations]);
-
   // W62-4 [헤세 · Chat 읽음 표시 버그]
   //
   // 실측으로 끊긴 지점을 특정했다(tests/w62-chat-mark-read.test.mjs):
@@ -4213,12 +4140,12 @@ export default function InboxPage() {
       <aside
         data-testid="chat-list-pane"
         className={cn(
-          "w-full shrink-0 flex-col border-r border-line bg-paper md:flex md:w-[340px]",
+          "w-full shrink-0 flex-col border-r border-line bg-paper md:flex md:w-[360px]",
           mobilePane === "conversation" ? "hidden" : "flex",
         )}
       >
         <div className="flex items-center justify-between px-5 pb-3 pt-5">
-          <h1 className="text-lg font-bold text-ink">메시지</h1>
+          <h1 className="text-[22px] font-semibold tracking-normal text-ink">Live feed</h1>
           <button
             type="button"
             onClick={handleReceive}
@@ -4231,22 +4158,22 @@ export default function InboxPage() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-5 pb-2 text-[11px] text-ink-4">
+        <div className="flex items-center justify-between gap-3 px-5 pb-2 text-[11px] text-ink-3">
           <span
             data-testid="chat-foreground-sync-status"
             className={cn("min-w-0 truncate", chatForegroundSync.error ? "text-danger" : chatForegroundSync.inFlight ? "text-accent" : "text-ink-4")}
-            title={chatForegroundSync.error ?? "앱을 열어 둔 동안 30초마다 새 대화를 확인합니다."}
+            title={chatForegroundSync.error ?? "새로고침, 수신, 발송, 탭 복귀 시 최신 대화를 다시 확인합니다."}
           >
             {chatForegroundSync.inFlight
-              ? "동기화 중"
+              ? "갱신 중"
               : chatForegroundSync.error
-                ? `동기화 실패 · ${chatForegroundSync.error}`
+                ? `갱신 실패 · ${chatForegroundSync.error}`
                 : chatForegroundSync.lastFinishedAtIso
-                  ? `최근 동기화 ${formatChatSyncTime(chatForegroundSync.lastFinishedAtIso)}`
-                  : "자동 동기화 대기"}
+                  ? `최근 갱신 ${formatChatSyncTime(chatForegroundSync.lastFinishedAtIso)}`
+                  : "Ready"}
           </span>
-          <span className="shrink-0" title="30초마다 새 대화를 확인합니다. Flu의 메일 수신 시점에 따라 반영 시간이 달라질 수 있습니다.">
-            30초 갱신
+          <span className="shrink-0" title="비용을 줄이기 위해 주기적 전체 재조회 없이 사용자 액션과 탭 복귀 시점에 갱신합니다.">
+            Event based
           </span>
         </div>
 

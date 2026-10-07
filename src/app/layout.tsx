@@ -12,8 +12,8 @@ const RELEASE_RUNTIME_ENVIRONMENT = process.env.NEXT_PUBLIC_FLU_RUNTIME_ENV ?? "
 const RELEASE_HOSTING_SITE = process.env.NEXT_PUBLIC_FLU_HOSTING_SITE ?? "unbound";
 
 export const metadata: Metadata = {
-  title: "Mixmaxclone Chat",
-  description: "Flu 라이브 Firebase 백엔드를 공유하는 AI 어시스트 커뮤니케이션 워크스페이스",
+  title: "Mixmax",
+  description: "Mixmax 스타일의 AI 어시스트 커뮤니케이션 워크스페이스",
 };
 
 export const viewport: Viewport = {

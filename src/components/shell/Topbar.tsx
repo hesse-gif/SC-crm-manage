@@ -172,7 +172,7 @@ export function Topbar({
           </button>
         </div>
       ) : null}
-      <header className="flex h-16 items-center gap-2 border-b border-line bg-paper/85 px-3 backdrop-blur sm:gap-4 sm:px-6">
+      <header className="flex h-16 items-center gap-2 border-b border-line bg-paper/95 px-3 backdrop-blur sm:gap-4 sm:px-6">
       <button
         ref={mobileNavButtonRef}
         type="button"
@@ -192,7 +192,7 @@ export function Topbar({
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="대화 검색 (Enter)"
+          placeholder="Search"
           className="min-w-0 w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-3"
         />
       </form>
@@ -202,6 +202,18 @@ export function Topbar({
         </LoadingStatus>
       ) : null}
       <div className="ml-auto flex items-center gap-1">
+      <button
+        type="button"
+        className="hidden h-10 items-center rounded-full border border-line bg-paper px-4 text-sm font-semibold text-ink-2 transition-colors hover:bg-fill hover:text-ink md:inline-flex"
+      >
+        Ask Mixmax
+      </button>
+      <button
+        type="button"
+        className="hidden h-10 items-center rounded-full bg-[#dca400] px-4 text-sm font-bold text-white transition-colors hover:bg-[#c99700] md:inline-flex"
+      >
+        Request upgrade
+      </button>
       {canViewAs ? (
         <div className="relative">
           <button
@@ -280,7 +292,7 @@ export function Topbar({
           <div className="absolute right-0 top-12 z-30 w-[300px] overflow-hidden rounded-md border border-line bg-paper shadow-pop">
             <div className="border-b border-line px-4 py-3">
               <div className="text-sm font-bold text-ink">알림</div>
-              <div className="mt-0.5 text-xs text-ink-3">검수·메시지·데이터 갱신</div>
+              <div className="mt-0.5 text-xs text-ink-3">Messages and review items</div>
             </div>
             <div className="divide-y divide-line">
               {canReadReviewInbox ? (
@@ -293,7 +305,7 @@ export function Topbar({
                     <div className="text-sm font-semibold text-ink">인박스</div>
                     <NotificationCountBadge count={reviewInboxCount} urgent />
                   </div>
-                  <div className="mt-0.5 text-xs text-ink-3">Flu 앱에서 사람 판단이 필요한 항목 보기</div>
+                  <div className="mt-0.5 text-xs text-ink-3">Items that need a human decision</div>
                 </Link>
               ) : null}
               <Link
@@ -302,18 +314,10 @@ export function Topbar({
                 className="block px-4 py-3 hover:bg-fill"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-ink">메시지 확인</div>
+                  <div className="text-sm font-semibold text-ink">Messages</div>
                   <NotificationCountBadge count={unreadMessageCount} urgent={unreadMessageCount > 0} />
                 </div>
-                <div className="mt-0.5 text-xs text-ink-3">프로그램·Direct 대화</div>
-              </Link>
-              <Link
-                href={externalFluHref("/flu/content")}
-                onClick={() => setNotificationsOpen(false)}
-                className="block px-4 py-3 hover:bg-fill"
-              >
-                <div className="text-sm font-semibold text-ink">활동 데이터</div>
-                <div className="mt-0.5 text-xs text-ink-3">Flu 앱에서 영상·댓글 활동 데이터 보기</div>
+                <div className="mt-0.5 text-xs text-ink-3">Program and direct conversations</div>
               </Link>
             </div>
           </div>

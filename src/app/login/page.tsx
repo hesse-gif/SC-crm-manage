@@ -70,28 +70,28 @@ export default function LoginPage() {
           <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-accent text-white text-xl font-bold select-none">
             M
           </span>
-          <span className="text-2xl font-bold text-ink tracking-tight">Mixmaxclone Chat</span>
+          <span className="text-2xl font-bold text-ink tracking-tight">Mixmax</span>
         </div>
 
         {/* Tagline */}
         <p className="text-sm font-medium text-ink-3 mb-8 leading-relaxed max-w-xs">
-Flu와 같은 대화를 이어서 관리하는 워크스페이스
+Sales communication workspace for live creator conversations
         </p>
 
         {/* Value bullets */}
         <ul className="space-y-4 max-w-xs">
           {[
             {
-              title: "채팅 인박스",
-              desc: "프로그램·Direct 대화를 한 화면에서 확인",
+              title: "Live feed",
+              desc: "Program and direct conversations in one focused inbox",
             },
             {
-              title: "AI 커뮤니케이션 자동화",
-              desc: "협업 제안·가이드 발송을 AI가 초안부터 처리, 사람은 검수만",
+              title: "Sequences",
+              desc: "Draft, review, and send assisted outreach from the same workflow",
             },
             {
-              title: "대화 자동 동기화",
-              desc: "앱을 열어 둔 동안 새 대화를 자동으로 확인",
+              title: "Event based refresh",
+              desc: "Refreshes after operator actions, mail events, and tab recovery",
             },
           ].map((b) => (
             <li key={b.title} className="flex gap-3">
@@ -113,7 +113,7 @@ Flu와 같은 대화를 이어서 관리하는 워크스페이스
             <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-accent text-white text-lg font-bold select-none">
               M
             </span>
-            <span className="text-xl font-bold text-ink">Mixmaxclone Chat</span>
+            <span className="text-xl font-bold text-ink">Mixmax</span>
           </div>
 
           <h1 className="text-2xl font-bold text-ink mb-1.5">로그인</h1>
@@ -145,7 +145,7 @@ Flu와 같은 대화를 이어서 관리하는 워크스페이스
 
           {/* Footer */}
           <p className="mt-12 text-center text-[11px] text-ink-4">
-Mixmaxclone Chat · 내부 운영 도구
+Mixmax · internal workspace
           </p>
         </div>
       </div>

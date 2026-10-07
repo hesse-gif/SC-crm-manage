@@ -68,10 +68,10 @@ export const FLU_NAV: NavItem[] = [
 ];
 
 export const CHAT_NAV: NavItem[] = [
-  { key: "inbox", label: "채팅 인박스", href: "/chat", icon: "chat" },
-  { key: "auto", label: "AI 자동응답 설정", href: "/chat/auto", icon: "sparkles" },
-  { key: "templates", label: "메시지 템플릿", href: "/chat/templates", icon: "doc" },
-  { key: "receipts", label: "수신확인", href: "/chat/receipts", icon: "check" },
+  { key: "inbox", label: "Live feed", href: "/chat", icon: "chat" },
+  { key: "auto", label: "Sequences", href: "/chat/auto", icon: "sparkles" },
+  { key: "templates", label: "Email templates", href: "/chat/templates", icon: "doc" },
+  { key: "receipts", label: "Outbox", href: "/chat/receipts", icon: "check" },
 ];
 
 export const ADMIN_NAV: NavItem[] = [

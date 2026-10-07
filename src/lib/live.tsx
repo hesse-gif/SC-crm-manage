@@ -208,7 +208,7 @@ const LiveCtx = createContext<LiveState>({
   loadingMore: {},
   loadingKeys: {},
   error: null,
-  chatForegroundSync: { enabled: false, inFlight: false, intervalMs: 30_000, error: null },
+  chatForegroundSync: { enabled: false, inFlight: false, intervalMs: 0, error: null },
   stale: false,
   seeded: false,
   authReady: false,
@@ -227,8 +227,6 @@ const LiveCtx = createContext<LiveState>({
 
 const CAN_READ = new Set(["super_admin", "admin", "manager", "viewer"]);
 const MEMORY_TTL_MS = 60_000;
-export const CHAT_FOREGROUND_REFRESH_INTERVAL_MS = 30_000;
-const CHAT_FOREGROUND_REFRESH_TIMEOUT_MS = 25_000;
 const BACKGROUND_HYDRATE_TIMEOUT_MS = 2_500;
 
 const DATASET_KEYS: DatasetKey[] = [
@@ -1304,7 +1302,7 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
   const [chatForegroundSync, setChatForegroundSync] = useState<ChatForegroundSyncState>({
     enabled: false,
     inFlight: false,
-    intervalMs: CHAT_FOREGROUND_REFRESH_INTERVAL_MS,
+    intervalMs: 0,
     error: null,
   });
   const snapshotFirstRoute = useMemo(() => isSnapshotFirstRoute(pathname), [pathname]);
@@ -1363,8 +1361,8 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
   const scpLifecycleScopeRef = useRef<ScpLifecycleDatasetScope>(UNREGISTERED_SCP_LIFECYCLE_DATASET_SCOPE);
   // 탭이 숨겨진 시각. 오래 비운 뒤 복귀하면 교체로 받아 보관·삭제 상태를 회복한다(W111 리뷰).
   const hiddenSinceMsRef = useRef(0);
-  const chatForegroundRefreshInFlightRef = useRef(false);
-  const chatForegroundRefreshRunRef = useRef(0);
+  const chatRefreshInFlightRef = useRef(false);
+  const chatRefreshRunRef = useRef(0);
   const autoHydrateRunningRef = useRef<Map<DatasetKey, string>>(new Map());
   const loadingKeyCountsRef = useRef<Partial<Record<DatasetKey, number>>>({});
 
@@ -1901,8 +1899,8 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
     };
   }, [authReady, canRead, identity, liveRole, load, noDataRoute, pathname]);
 
-  // 채팅 독립 앱용 foreground refresh. 기존 LiveDataProvider의 read-only dataset loader만 재사용하고,
-  // receiveEmail/sendEmail/AI preview 같은 mutation callable은 호출하지 않는다.
+  // Chat is refreshed by explicit app events and visibility recovery below. A fixed foreground
+  // timer would repeatedly reread large conversation pages while the operator is idle.
   useEffect(() => {
     const enabled = pathname.startsWith("/chat")
       && !noDataRoute
@@ -1916,103 +1914,68 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       ...prev,
       enabled,
       inFlight: enabled ? prev.inFlight : false,
-      intervalMs: CHAT_FOREGROUND_REFRESH_INTERVAL_MS,
+      intervalMs: 0,
       error: enabled ? prev.error : null,
     }));
 
     if (!enabled) {
-      chatForegroundRefreshInFlightRef.current = false;
-      return undefined;
+      chatRefreshInFlightRef.current = false;
     }
+    return () => {
+      chatRefreshRunRef.current += 1;
+      chatRefreshInFlightRef.current = false;
+      setChatForegroundSync((prev) => ({ ...prev, inFlight: false }));
+    };
+  }, [authReady, canRead, identity, liveRole, noDataRoute, pathname, refreshKeys]);
 
-    let cancelled = false;
-    let refreshTimeout: number | undefined;
-    const run = async () => {
-      if (cancelled || document.visibilityState !== "visible" || chatForegroundRefreshInFlightRef.current) return;
-      chatForegroundRefreshInFlightRef.current = true;
-      const runId = chatForegroundRefreshRunRef.current + 1;
-      chatForegroundRefreshRunRef.current = runId;
+  useEffect(() => {
+    function trackChatRefresh(pendingRead: Promise<void>) {
+      if (!pathname.startsWith("/chat") || chatRefreshInFlightRef.current) return;
+      chatRefreshInFlightRef.current = true;
+      const runId = chatRefreshRunRef.current + 1;
+      chatRefreshRunRef.current = runId;
       const startedAtIso = new Date().toISOString();
       setChatForegroundSync((prev) => ({
         ...prev,
         enabled: true,
         inFlight: true,
-        intervalMs: CHAT_FOREGROUND_REFRESH_INTERVAL_MS,
+        intervalMs: 0,
         lastStartedAtIso: startedAtIso,
         error: null,
       }));
-      try {
-        const pendingRead = load(refreshKeys, {
-          background: true,
-          force: true,
-          appendKeys: ["conversations"],
-          throwOnError: true,
-        });
-        // A UI timeout does not cancel Firebase's request. Keep the network gate
-        // until the real request settles so the next tick cannot overlap it.
-        const releaseRead = () => {
-          if (chatForegroundRefreshRunRef.current === runId) chatForegroundRefreshInFlightRef.current = false;
-        };
-        void pendingRead.then(releaseRead, releaseRead);
-        await Promise.race([
-          pendingRead,
-          new Promise<never>((_, reject) => {
-            refreshTimeout = window.setTimeout(() => reject(new Error("chat_foreground_refresh_timeout")), CHAT_FOREGROUND_REFRESH_TIMEOUT_MS);
-          }),
-        ]);
-        if (!cancelled && chatForegroundRefreshRunRef.current === runId) {
+      void pendingRead
+        .then(() => {
+          if (chatRefreshRunRef.current !== runId) return;
           const finishedAtIso = new Date().toISOString();
           setChatForegroundSync((prev) => ({
             ...prev,
             enabled: true,
             inFlight: false,
-            intervalMs: CHAT_FOREGROUND_REFRESH_INTERVAL_MS,
+            intervalMs: 0,
             lastFinishedAtIso: finishedAtIso,
             error: null,
           }));
           window.dispatchEvent(new CustomEvent("chat:foreground-sync", { detail: { status: "success", finishedAtIso } }));
-        }
-      } catch (error) {
-        if (!cancelled && chatForegroundRefreshRunRef.current === runId) {
+        })
+        .catch((error) => {
+          if (chatRefreshRunRef.current !== runId) return;
           const finishedAtIso = new Date().toISOString();
-          const message = error instanceof Error && error.message === "chat_foreground_refresh_timeout"
-            ? "채팅 동기화가 시간 초과되었습니다."
-            : publicCallableErrorMessage(error, "채팅 동기화에 실패했습니다.");
+          const message = publicCallableErrorMessage(error, "채팅 갱신에 실패했습니다.");
           setChatForegroundSync((prev) => ({
             ...prev,
             enabled: true,
             inFlight: false,
-            intervalMs: CHAT_FOREGROUND_REFRESH_INTERVAL_MS,
+            intervalMs: 0,
             lastFinishedAtIso: finishedAtIso,
             error: message,
           }));
           window.dispatchEvent(new CustomEvent("chat:foreground-sync", { detail: { status: "error", finishedAtIso, message } }));
-        }
-      } finally {
-        if (refreshTimeout !== undefined) window.clearTimeout(refreshTimeout);
-      }
-    };
+        })
+        .finally(() => {
+          if (chatRefreshRunRef.current === runId) chatRefreshInFlightRef.current = false;
+        });
+    }
 
-    const initial = window.setTimeout(() => void run(), 100);
-    const interval = window.setInterval(() => void run(), CHAT_FOREGROUND_REFRESH_INTERVAL_MS);
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void run();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      cancelled = true;
-      chatForegroundRefreshRunRef.current += 1;
-      chatForegroundRefreshInFlightRef.current = false;
-      setChatForegroundSync((prev) => ({ ...prev, inFlight: false }));
-      window.clearTimeout(initial);
-      if (refreshTimeout !== undefined) window.clearTimeout(refreshTimeout);
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [authReady, canRead, identity, liveRole, load, noDataRoute, pathname, refreshKeys]);
-
-  useEffect(() => {
     function onRefresh() {
       // W114 (헤세 실측): 이전엔 { force: true }만 줘서 mergeDatasetBundle이 conversations를
       //   **교체**로 커밋했다 — 명시적 새로고침을 누를 때마다 드레인해둔 뒷 페이지가 통째로
@@ -2024,7 +1987,11 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       //   STALE_REPLACE_AFTER_HIDDEN_MS 경로(아래 onVisible)에 그대로 남아 있다.
       // refresh()와 같은 이유로 진행 중 응답 합류를 끊는다 — 명시적 새로고침은 항상 새 네트워크 호출.
       invalidateCallableDedupe();
-      if (authReady && canRead && refreshKeys.length > 0) void load(refreshKeys, { force: true, appendKeys: ["conversations"] });
+      if (authReady && canRead && refreshKeys.length > 0) {
+        const pendingRead = load(refreshKeys, { force: true, appendKeys: ["conversations"], throwOnError: pathname.startsWith("/chat") });
+        trackChatRefresh(pendingRead);
+        void pendingRead;
+      }
     }
     function onVisible() {
       if (authReady && canRead && refreshKeys.length > 0 && document.visibilityState === "visible") {
@@ -2036,7 +2003,9 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
         const hiddenFor = hiddenSinceMsRef.current > 0 ? Date.now() - hiddenSinceMsRef.current : 0;
         hiddenSinceMsRef.current = 0;
         if (hiddenFor >= STALE_REPLACE_AFTER_HIDDEN_MS) {
-          void load(refreshKeys, { background: true });
+          const pendingRead = load(refreshKeys, { background: true, throwOnError: pathname.startsWith("/chat") });
+          trackChatRefresh(pendingRead);
+          void pendingRead;
           return;
         }
         // W111 (헤세: "가만히 두면 260 → 86 으로 줄었다 다시 오른다"): 배경 갱신은 첫 페이지만
@@ -2045,7 +2014,9 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
         //   id 기준 병합(mergeRows)으로 커밋하면 최신 행은 갱신되고 이미 받은 행은 살아남는다.
         //   W114: 명시적 새로고침(flu:data-refresh, force, 위 onRefresh)도 같은 이유로 이제 병합이다
         //   — force는 여기선 "네트워크 재요청을 강제한다"는 뜻일 뿐 커밋 방식과는 별개다.
-        void load(refreshKeys, { background: true, appendKeys: ["conversations"] });
+        const pendingRead = load(refreshKeys, { background: true, appendKeys: ["conversations"], throwOnError: pathname.startsWith("/chat") });
+        trackChatRefresh(pendingRead);
+        void pendingRead;
       }
     }
     function onHidden() {
@@ -2059,7 +2030,7 @@ export function LiveDataProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", onVisible);
       document.removeEventListener("visibilitychange", onHidden);
     };
-  }, [authReady, canRead, load, refreshKeys]);
+  }, [authReady, canRead, load, pathname, refreshKeys]);
 
   useEffect(() => {
     function onDataKeysRefresh(event: Event) {
